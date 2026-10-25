@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { connection } from "next/server";
 
-import { pickDailyQuestion, koreaDateKey } from "@/lib/daily";
+import { pickDailyQuestions, koreaDateKey } from "@/lib/daily";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
   emptyParticipation,
@@ -27,7 +27,7 @@ export type HomeData = {
   error: string | null;
   dateKey: string;
   questions: Question[];
-  today: Question | null;
+  today: Question[];
   votedIds: string[];
 };
 
@@ -81,7 +81,7 @@ export async function loadHome(): Promise<HomeData> {
       error: null,
       dateKey,
       questions,
-      today: pickDailyQuestion(questions, dateKey),
+      today: pickDailyQuestions(questions, dateKey),
       votedIds: [],
     };
   }
@@ -93,7 +93,7 @@ export async function loadHome(): Promise<HomeData> {
       error: null,
       dateKey,
       questions,
-      today: pickDailyQuestion(questions, dateKey),
+      today: pickDailyQuestions(questions, dateKey),
       votedIds,
     };
   } catch {
@@ -102,7 +102,7 @@ export async function loadHome(): Promise<HomeData> {
       error: "질문을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
       dateKey,
       questions: [],
-      today: null,
+      today: [],
       votedIds: [],
     };
   }

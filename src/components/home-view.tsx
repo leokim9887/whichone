@@ -2,6 +2,7 @@
 import { ArrowRight } from "lucide-react";
 
 import { HomeBrowser } from "@/components/home-browser";
+import { TodayCarousel } from "@/components/today-carousel";
 import { formatKoreanDate } from "@/lib/daily";
 import { formatParticipantCount } from "@/lib/format";
 import { categoryTopicLabel } from "@/lib/topics";
@@ -49,18 +50,19 @@ export function HomeView({
         />
       ) : null}
 
-      {data.today && !data.error ? (
-        <section>
-          <TodayCard
-            id={data.today.id}
-            title={data.today.title}
-            category={categoryTopicLabel(data.today.category, data.today.topic)}
-            dateLabel={formatKoreanDate(data.dateKey)}
-            countLabel={
-              data.mode === "demo" ? "데모에서는 공유 집계를 보여 주지 않습니다" : formatParticipantCount(data.today.participantCount)
-            }
-          />
-        </section>
+      {data.today.length > 0 && !data.error ? (
+        <TodayCarousel
+          dateLabel={formatKoreanDate(data.dateKey)}
+          slides={data.today.map((question) => ({
+            id: question.id,
+            title: question.title,
+            category: categoryTopicLabel(question.category, question.topic),
+            countLabel:
+              data.mode === "demo"
+                ? "데모에서는 공유 집계를 보여 주지 않습니다"
+                : formatParticipantCount(question.participantCount),
+          }))}
+        />
       ) : null}
 
       {!data.error && data.questions.length > 0 ? (
@@ -97,38 +99,6 @@ function DemoNotice() {
       로컬 데모 모드입니다. 질문 목록은 예시이고, 투표와 의견은 이 브라우저에만 저장됩니다. 다른 사람과 공유되는 결과가
       아닙니다.
     </p>
-  );
-}
-
-function TodayCard({
-  id,
-  title,
-  category,
-  dateLabel,
-  countLabel,
-}: {
-  id: string;
-  title: string;
-  category: string;
-  dateLabel: string;
-  countLabel: string;
-}) {
-  return (
-    <article className="rounded-[28px] border border-line bg-card p-5 sm:p-7">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="rounded-full bg-accent-soft px-3 py-1 font-semibold text-accent-strong">오늘의 질문</span>
-        <span className="text-muted">{dateLabel}</span>
-        <span className="text-muted">{category}</span>
-      </div>
-      <h2 className="mt-4 text-2xl font-bold leading-snug sm:text-3xl">{title}</h2>
-      <p className="mt-3 text-sm text-muted">{countLabel}</p>
-      <Link
-        href={`/questions/${id}`}
-        className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong"
-      >
-        선택하러 가기
-      </Link>
-    </article>
   );
 }
 

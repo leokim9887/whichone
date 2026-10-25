@@ -13,7 +13,7 @@ import { CATEGORIES, type Category, type DataMode, type Question } from "@/lib/t
 
 const CATEGORY_IMAGE: Record<Category, string> = {
   daily: "/categories/daily.jpg",
-  love: "/categories/love-date.jpg",
+  love: "/categories/love-hands.jpg",
   money: "/categories/money.jpg",
   work: "/categories/work-office.jpg",
   food: "/categories/food.jpg",

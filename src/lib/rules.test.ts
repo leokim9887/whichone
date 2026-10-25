@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { filterQuestions, popularQuestions } from "./catalog.ts";
-import { hashString, isDateKey, koreaDateKey, pickDailyQuestion } from "./daily.ts";
+import { hashString, isDateKey, koreaDateKey, pickDailyQuestion, pickDailyQuestions } from "./daily.ts";
 import { addDemoComment, castDemoVote, EMPTY_DEMO_STATE } from "./demo-state.ts";
 import { toPercentages } from "./percentages.ts";
 import { buildSummary } from "./results.ts";
@@ -98,6 +98,14 @@ describe("daily question", () => {
     const second = pickDailyQuestion(SEED_QUESTIONS, "2026-11-02");
     assert.equal(first?.id, second?.id);
     assert.equal(typeof hashString("2026-11-02"), "number");
+    const daily = pickDailyQuestions(SEED_QUESTIONS, "2026-11-02");
+    const again = pickDailyQuestions(SEED_QUESTIONS, "2026-11-02");
+    assert.deepEqual(
+      daily.map((question) => question.id),
+      again.map((question) => question.id),
+    );
+    assert.equal(new Set(daily.map((question) => question.category)).size, daily.length);
+    assert.equal(daily.length, 6);
   });
 });
 

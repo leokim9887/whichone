@@ -1,3 +1,5 @@
+import { CATEGORIES, type Category } from "@/lib/types";
+
 const DATE_KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export function koreaDateKey(now = new Date()): string {
@@ -52,4 +54,22 @@ export function pickDailyQuestion<T extends { id: string; dailyFeatureDate: stri
 
   const ordered = [...questions].sort((a, b) => a.id.localeCompare(b.id));
   return ordered[hashString(dateKey) % ordered.length] ?? null;
+}
+
+export function pickDailyQuestions<
+  T extends { id: string; category: Category; dailyFeatureDate: string | null },
+>(questions: readonly T[], dateKey: string): T[] {
+  return CATEGORIES.flatMap((category) => {
+    const pool = questions.filter((question) => question.category === category);
+    if (pool.length === 0) {
+      return [];
+    }
+    const featured = pool.find((question) => question.dailyFeatureDate === dateKey);
+    if (featured) {
+      return [featured];
+    }
+    const ordered = [...pool].sort((a, b) => a.id.localeCompare(b.id));
+    const picked = ordered[hashString(`${dateKey}:${category}`) % ordered.length];
+    return picked ? [picked] : [];
+  });
 }
