@@ -16,7 +16,14 @@ function parseRaw(raw: string | null): DemoState {
   }
   try {
     const parsed: unknown = JSON.parse(raw);
-    return isDemoState(parsed) ? parsed : EMPTY_DEMO_STATE;
+    if (!isDemoState(parsed)) {
+      return EMPTY_DEMO_STATE;
+    }
+    return {
+      ...parsed,
+      replies: Array.isArray(parsed.replies) ? parsed.replies : [],
+      likes: parsed.likes && typeof parsed.likes === "object" ? parsed.likes : {},
+    };
   } catch {
     return EMPTY_DEMO_STATE;
   }

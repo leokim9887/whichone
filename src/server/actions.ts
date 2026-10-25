@@ -150,6 +150,79 @@ export async function addCommentAction(questionId: string, body: string): Promis
   }
 }
 
+export async function addReplyAction(questionId: string, parentId: string, body: string): Promise<CommentActionResult> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  const validated = validateComment(body);
+  if (!validated.ok) {
+    return { ok: false, code: "invalid", message: validated.message, errors: validated.errors };
+  }
+  if (!isUuid(questionId) || !isUuid(parentId)) {
+    return { ok: false, code: "invalid", message: messageForCode("invalid") };
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("add_comment_reply", {
+      p_question_id: questionId,
+      p_parent_id: parentId,
+      p_body: validated.value.body,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    const shot = await readSnapshot(auth.supabase, questionId);
+    if (!shot) {
+      return failure("unavailable");
+    }
+    return { ok: true, ...shot };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
+export async function toggleCommentLikeAction(questionId: string, commentId: string): Promise<CommentActionResult> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  if (!isUuid(questionId) || !isUuid(commentId)) {
+    return { ok: false, code: "invalid", message: messageForCode("invalid") };
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("toggle_comment_like", {
+      p_question_id: questionId,
+      p_comment_id: commentId,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    const shot = await readSnapshot(auth.supabase, questionId);
+    if (!shot) {
+      return failure("unavailable");
+    }
+    return { ok: true, ...shot };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
 export async function submitSuggestionAction(input: {
   title: string;
   description: string;

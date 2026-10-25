@@ -3,13 +3,14 @@
 import { Check, LoaderCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { CommentThread } from "@/components/comment-thread";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
 import { ShareActions } from "@/components/share-actions";
 import { categoryTopicLabel } from "@/lib/topics";
-import { addDemoComment, castDemoVote } from "@/lib/demo-state";
+import { addDemoComment, castDemoVote, demoPublicComments } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
-import { formatDateTime, formatParticipantCount } from "@/lib/format";
+import { formatParticipantCount } from "@/lib/format";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
 import { buildSummary } from "@/lib/results";
@@ -60,7 +61,7 @@ export function QuestionInteractive({
             : null,
         }
       : liveParticipation;
-  const comments = mode === "demo" ? (demoComment ? [demoComment] : []) : liveComments;
+  const comments = mode === "demo" ? demoPublicComments(demo, question.id) : liveComments;
   const selected = participation.voted ? participation.optionId : draftOption;
 
   const summary = useMemo(
@@ -68,12 +69,7 @@ export function QuestionInteractive({
     [participation.counts, participation.optionId, participation.voted, question.options],
   );
 
-  const visibleComments = comments.filter((comment) => {
-    if (participation.comment && comment.id === participation.comment.id) {
-      return false;
-    }
-    return filter === "all" || comment.optionId === filter;
-  });
+  const visibleComments = comments.filter((comment) => filter === "all" || comment.optionId === filter);
   const optionText = new Map(question.options.map((option) => [option.id, option.text]));
 
   async function vote() {
@@ -216,19 +212,18 @@ export function QuestionInteractive({
           <div>
             <h2 className="text-lg font-bold">선택 이유</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              이유는 선택 사항입니다. 이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다.
+              이유는 선택 사항입니다. 이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다. 다른 사람의 이유에는 답글과
+              추천을 남길 수 있습니다.
             </p>
           </div>
           {participation.comment ? (
-            <article className="rounded-2xl bg-background px-4 py-3">
-              <p className="text-xs font-semibold text-accent">내 의견 · {optionText.get(participation.comment.optionId)}</p>
-              {participation.comment.status === "visible" ? (
-                <p className="mt-2 leading-7">{participation.comment.body}</p>
-              ) : (
-                <p className="mt-2 text-sm text-muted">작성한 의견이 숨김 처리되었습니다.</p>
-              )}
-              <p className="mt-2 text-xs text-muted">{formatDateTime(participation.comment.createdAt)}</p>
-            </article>
+            participation.comment.status === "visible" ? (
+              <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">
+                내 의견을 남겼습니다. 아래 목록에서 답글과 추천을 볼 수 있습니다.
+              </p>
+            ) : (
+              <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">작성한 의견이 숨김 처리되었습니다.</p>
+            )
           ) : (
             <form
               className="space-y-3"
@@ -267,7 +262,7 @@ export function QuestionInteractive({
           )}
 
           <div>
-            <h3 className="text-base font-bold">{mode === "demo" ? "이 브라우저에 남긴 이유" : "다른 사람들의 이유"}</h3>
+            <h3 className="text-base font-bold">{mode === "demo" ? "이 브라우저에 남긴 이유" : "남긴 이유"}</h3>
             <div className="mt-3 flex gap-2 overflow-x-auto">
               <FilterChip active={filter === "all"} onClick={() => setFilter("all")} label="전체" />
               {question.options
@@ -289,26 +284,15 @@ export function QuestionInteractive({
                   : "다른 사람의 이유는 아직 없습니다."}
               </p>
             ) : (
-              <ul className="mt-4 space-y-3">
-                {visibleComments.map((comment) => (
-                  <li key={comment.id} className="rounded-2xl border border-line px-4 py-3">
-                    <p className="text-xs font-semibold text-muted">{optionText.get(comment.optionId) ?? "선택"}</p>
-                    <p className="mt-2 leading-7">{comment.body}</p>
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <time className="text-xs text-muted" dateTime={comment.createdAt}>
-                        {formatDateTime(comment.createdAt)}
-                      </time>
-                      <ReportForm
-                        mode={mode}
-                        targetType="comment"
-                        targetId={comment.id}
-                        demoState={demo}
-                        onDemoState={writeDemoState}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <CommentThread
+                mode={mode}
+                questionId={question.id}
+                comments={visibleComments}
+                optionText={optionText}
+                demo={demo}
+                onDemoState={writeDemoState}
+                onComments={setLiveComments}
+              />
             )}
           </div>
         </section>

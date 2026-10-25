@@ -8,6 +8,7 @@ import type {
   OwnComment,
   Participation,
   PublicComment,
+  PublicReply,
   Question,
   QuestionStatus,
 } from "@/lib/types";
@@ -148,22 +149,39 @@ function parseOwnComment(value: unknown): OwnComment | null {
   return { id, optionId, body, createdAt, status: parseCommentStatus(value.status) };
 }
 
+function parsePublicReply(item: unknown): PublicReply {
+  if (!isRecord(item)) {
+    throw new Error("invalid comment");
+  }
+  const id = asString(item.id);
+  const optionId = asString(item.optionId);
+  const body = asString(item.body);
+  const createdAt = asString(item.createdAt);
+  const likeCount = item.likeCount === undefined ? 0 : asNumber(item.likeCount);
+  const likedByMe = item.likedByMe === undefined ? false : asBoolean(item.likedByMe);
+  const mine = item.mine === undefined ? false : asBoolean(item.mine);
+  if (!id || !optionId || !body || !createdAt || likeCount === null || likeCount < 0 || likedByMe === null || mine === null) {
+    throw new Error("invalid comment");
+  }
+  return { id, optionId, body, createdAt, likeCount, likedByMe, mine };
+}
+
 export function parsePublicComments(value: unknown): PublicComment[] {
   if (!Array.isArray(value)) {
     throw new Error("invalid comments");
   }
   return value.map((item) => {
+    const reply = parsePublicReply(item);
     if (!isRecord(item)) {
       throw new Error("invalid comment");
     }
-    const id = asString(item.id);
-    const optionId = asString(item.optionId);
-    const body = asString(item.body);
-    const createdAt = asString(item.createdAt);
-    if (!id || !optionId || !body || !createdAt) {
+    if (item.replies === undefined) {
+      return { ...reply, replies: [] };
+    }
+    if (!Array.isArray(item.replies)) {
       throw new Error("invalid comment");
     }
-    return { id, optionId, body, createdAt };
+    return { ...reply, replies: item.replies.map((child) => parsePublicReply(child)) };
   });
 }
 

@@ -3,7 +3,8 @@ import { describe, it } from "node:test";
 
 import { filterQuestions, popularQuestions } from "./catalog.ts";
 import { hashString, isDateKey, koreaDateKey, pickDailyQuestion, pickDailyQuestions } from "./daily.ts";
-import { addDemoComment, castDemoVote, EMPTY_DEMO_STATE } from "./demo-state.ts";
+import { addDemoComment, addDemoReply, castDemoVote, EMPTY_DEMO_STATE, toggleDemoLike } from "./demo-state.ts";
+import { parsePublicComments } from "./parsers.ts";
 import { toPercentages } from "./percentages.ts";
 import { buildSummary } from "./results.ts";
 import { SEED_QUESTIONS } from "./seed-questions.ts";
@@ -175,6 +176,52 @@ describe("demo votes", () => {
     assert.equal(withoutVote.ok, false);
     const withVote = addDemoComment(first.state, "q1", "이유");
     assert.equal(withVote.ok, true);
+    if (!withVote.ok) {
+      return;
+    }
+    const reply = addDemoReply(withVote.state, "q1", withVote.value.id, "그 기준도 중요해요");
+    assert.equal(reply.ok, true);
+    if (!reply.ok) {
+      return;
+    }
+    const secondReply = addDemoReply(reply.state, "q1", withVote.value.id, "한 번 더");
+    assert.deepEqual(secondReply, { ok: false, code: "already_replied" });
+    const ownLike = toggleDemoLike(reply.state, "q1", withVote.value.id);
+    assert.deepEqual(ownLike, { ok: false, code: "own_like" });
+  });
+});
+
+describe("comment threads", () => {
+  it("reads likes and one level of replies", () => {
+    const comments = parsePublicComments([
+      {
+        id: "c1",
+        optionId: "o1",
+        body: "이유",
+        createdAt: "2026-10-26T00:00:00.000Z",
+        likeCount: 2,
+        likedByMe: true,
+        mine: false,
+        replies: [
+          {
+            id: "r1",
+            optionId: "o2",
+            body: "답글",
+            createdAt: "2026-10-26T01:00:00.000Z",
+            likeCount: 0,
+            likedByMe: false,
+            mine: true,
+          },
+        ],
+      },
+    ]);
+    assert.equal(comments[0]?.likeCount, 2);
+    assert.equal(comments[0]?.replies[0]?.mine, true);
+    const legacy = parsePublicComments([
+      { id: "c2", optionId: "o1", body: "예전 의견", createdAt: "2026-10-26T00:00:00.000Z" },
+    ]);
+    assert.deepEqual(legacy[0]?.replies, []);
+    assert.equal(legacy[0]?.likeCount, 0);
   });
 });
 

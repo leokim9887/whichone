@@ -65,14 +65,24 @@ export type ResultSummary = {
   options: ResultOption[];
 };
 
-export type PublicComment = {
+export type CommentBody = {
   id: string;
   optionId: string;
   body: string;
   createdAt: string;
 };
 
-export type OwnComment = PublicComment & {
+export type PublicReply = CommentBody & {
+  likeCount: number;
+  likedByMe: boolean;
+  mine: boolean;
+};
+
+export type PublicComment = PublicReply & {
+  replies: PublicReply[];
+};
+
+export type OwnComment = CommentBody & {
   status: CommentStatus;
 };
 

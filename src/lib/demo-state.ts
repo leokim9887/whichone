@@ -1,5 +1,5 @@
 import { LIMITS } from "@/lib/limits";
-import type { Category, SuggestionDraft } from "@/lib/types";
+import type { Category, PublicComment, SuggestionDraft } from "@/lib/types";
 
 export type DemoVote = {
   optionId: string;
@@ -28,9 +28,20 @@ export type DemoReport = {
   createdAt: string;
 };
 
+export type DemoReply = {
+  id: string;
+  questionId: string;
+  parentId: string;
+  optionId: string;
+  body: string;
+  createdAt: string;
+};
+
 export type DemoState = {
   votes: Record<string, DemoVote>;
   comments: Record<string, DemoComment>;
+  replies: DemoReply[];
+  likes: Record<string, true>;
   suggestions: DemoSuggestion[];
   reports: DemoReport[];
 };
@@ -38,6 +49,8 @@ export type DemoState = {
 export const EMPTY_DEMO_STATE: DemoState = {
   votes: {},
   comments: {},
+  replies: [],
+  likes: {},
   suggestions: [],
   reports: [],
 };
@@ -48,6 +61,8 @@ function clone(state: DemoState): DemoState {
   return {
     votes: { ...state.votes },
     comments: { ...state.comments },
+    replies: [...(state.replies ?? [])],
+    likes: { ...(state.likes ?? {}) },
     suggestions: [...state.suggestions],
     reports: [...state.reports],
   };
@@ -96,6 +111,83 @@ export function addDemoComment(
   const next = clone(state);
   next.comments[questionId] = comment;
   return { ok: true, state: next, value: comment };
+}
+
+export function addDemoReply(
+  state: DemoState,
+  questionId: string,
+  parentId: string,
+  body: string,
+  now = new Date().toISOString(),
+): DemoMutation<DemoReply> {
+  const vote = state.votes[questionId];
+  const parent = state.comments[questionId];
+  if (!vote) {
+    return { ok: false, code: "vote_required" };
+  }
+  if (!parent || parent.id !== parentId) {
+    return { ok: false, code: "not_found" };
+  }
+  if ((state.replies ?? []).some((reply) => reply.parentId === parentId)) {
+    return { ok: false, code: "already_replied" };
+  }
+
+  const reply: DemoReply = {
+    id: `demo-reply-${parentId}`,
+    questionId,
+    parentId,
+    optionId: vote.optionId,
+    body,
+    createdAt: now,
+  };
+  const next = clone(state);
+  next.replies = [reply, ...next.replies];
+  return { ok: true, state: next, value: reply };
+}
+
+export function toggleDemoLike(state: DemoState, questionId: string, commentId: string): DemoMutation<boolean> {
+  const vote = state.votes[questionId];
+  if (!vote) {
+    return { ok: false, code: "vote_required" };
+  }
+  const root = state.comments[questionId];
+  const reply = (state.replies ?? []).find((item) => item.id === commentId && item.questionId === questionId);
+  if (root?.id !== commentId && !reply) {
+    return { ok: false, code: "not_found" };
+  }
+  return { ok: false, code: "own_like" };
+}
+
+export function demoPublicComments(state: DemoState, questionId: string): PublicComment[] {
+  const root = state.comments[questionId];
+  if (!root) {
+    return [];
+  }
+  const liked = (id: string) => Boolean(state.likes?.[id]);
+  return [
+    {
+      id: root.id,
+      optionId: root.optionId,
+      body: root.body,
+      createdAt: root.createdAt,
+      likeCount: liked(root.id) ? 1 : 0,
+      likedByMe: liked(root.id),
+      mine: true,
+      replies: (state.replies ?? [])
+        .filter((reply) => reply.parentId === root.id)
+        .slice()
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .map((reply) => ({
+          id: reply.id,
+          optionId: reply.optionId,
+          body: reply.body,
+          createdAt: reply.createdAt,
+          likeCount: liked(reply.id) ? 1 : 0,
+          likedByMe: liked(reply.id),
+          mine: true,
+        })),
+    },
+  ];
 }
 
 export function addDemoSuggestion(
