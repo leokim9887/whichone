@@ -150,7 +150,11 @@ export async function addCommentAction(questionId: string, body: string): Promis
   }
 }
 
-export async function addReplyAction(questionId: string, parentId: string, body: string): Promise<CommentActionResult> {
+export async function addReplyAction(
+  questionId: string,
+  parentId: string,
+  body: string,
+): Promise<{ ok: true; comments: PublicComment[] | null } | { ok: false; code: string; message: string; errors?: FieldErrors }> {
   if (!isSupabaseConfigured()) {
     return { ok: false, code: "demo", message: "" };
   }
@@ -179,17 +183,24 @@ export async function addReplyAction(questionId: string, parentId: string, body:
     if (!result.ok) {
       return failure(result.code);
     }
-    const shot = await readSnapshot(auth.supabase, questionId);
-    if (!shot) {
-      return failure("unavailable");
+    const listed = await auth.supabase.rpc("list_visible_comments", { p_question_id: questionId });
+    if (listed.error) {
+      return { ok: true, comments: null };
     }
-    return { ok: true, ...shot };
+    try {
+      return { ok: true, comments: parsePublicComments(listed.data) };
+    } catch {
+      return { ok: true, comments: null };
+    }
   } catch {
     return failure("unavailable");
   }
 }
 
-export async function toggleCommentLikeAction(questionId: string, commentId: string): Promise<CommentActionResult> {
+export async function toggleCommentLikeAction(
+  questionId: string,
+  commentId: string,
+): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
   if (!isSupabaseConfigured()) {
     return { ok: false, code: "demo", message: "" };
   }
@@ -213,11 +224,7 @@ export async function toggleCommentLikeAction(questionId: string, commentId: str
     if (!result.ok) {
       return failure(result.code);
     }
-    const shot = await readSnapshot(auth.supabase, questionId);
-    if (!shot) {
-      return failure("unavailable");
-    }
-    return { ok: true, ...shot };
+    return { ok: true };
   } catch {
     return failure("unavailable");
   }

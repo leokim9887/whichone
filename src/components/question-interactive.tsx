@@ -288,6 +288,7 @@ export function QuestionInteractive({
                 mode={mode}
                 questionId={question.id}
                 comments={visibleComments}
+                myOptionId={participation.optionId}
                 optionText={optionText}
                 demo={demo}
                 onDemoState={writeDemoState}

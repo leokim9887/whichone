@@ -1,21 +1,23 @@
 "use client";
 
-import { LoaderCircle, MessageCircle, ThumbsUp } from "lucide-react";
-import { useState } from "react";
+import { MessageCircle, ThumbsUp } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { ReportForm } from "@/components/report-form";
+import { addReplyLive, toggleLikeLive } from "@/lib/comment-live";
+import { adoptServerComments, insertReply, removeReply, toggleLocalLike } from "@/lib/comment-updates";
 import { addDemoReply, toggleDemoLike, type DemoState } from "@/lib/demo-state";
 import { formatDateTime } from "@/lib/format";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
 import type { DataMode, PublicComment, PublicReply } from "@/lib/types";
 import { validateComment } from "@/lib/validation";
-import { addReplyAction, toggleCommentLikeAction } from "@/server/actions";
 
 export function CommentThread({
   mode,
   questionId,
   comments,
+  myOptionId,
   optionText,
   demo,
   onDemoState,
@@ -24,41 +26,41 @@ export function CommentThread({
   mode: DataMode;
   questionId: string;
   comments: PublicComment[];
+  myOptionId: string | null;
   optionText: Map<string, string>;
   demo: DemoState;
   onDemoState: (state: DemoState) => void;
-  onComments: (comments: PublicComment[]) => void;
+  onComments: (update: PublicComment[] | ((current: PublicComment[]) => PublicComment[])) => void;
 }) {
   const [openReplyId, setOpenReplyId] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [replyError, setReplyError] = useState<string | null>(null);
-  const [replySaving, setReplySaving] = useState(false);
-  const [likeSavingId, setLikeSavingId] = useState<string | null>(null);
   const [likeError, setLikeError] = useState<{ id: string; message: string } | null>(null);
+  const likesInFlight = useRef(new Set<string>());
+  const replyLock = useRef(false);
 
   async function like(commentId: string) {
-    if (likeSavingId) {
+    if (likesInFlight.current.has(commentId)) {
       return;
     }
-    setLikeSavingId(commentId);
     setLikeError(null);
 
     if (mode === "demo") {
       const result = toggleDemoLike(demo, questionId, commentId);
-      setLikeSavingId(null);
       if (!result.ok) {
         setLikeError({ id: commentId, message: messageForCode(result.code) });
       }
       return;
     }
 
-    const result = await toggleCommentLikeAction(questionId, commentId);
-    setLikeSavingId(null);
+    likesInFlight.current.add(commentId);
+    onComments((current) => toggleLocalLike(current, commentId));
+    const result = await toggleLikeLive(questionId, commentId);
+    likesInFlight.current.delete(commentId);
     if (!result.ok) {
+      onComments((current) => toggleLocalLike(current, commentId));
       setLikeError({ id: commentId, message: result.message });
-      return;
     }
-    onComments(result.comments);
   }
 
   async function saveReply(parentId: string) {
@@ -67,12 +69,15 @@ export function CommentThread({
       setReplyError(validated.message);
       return;
     }
-    setReplySaving(true);
+    if (replyLock.current) {
+      return;
+    }
+    replyLock.current = true;
     setReplyError(null);
 
     if (mode === "demo") {
       const result = addDemoReply(demo, questionId, parentId, validated.value.body);
-      setReplySaving(false);
+      replyLock.current = false;
       if (!result.ok) {
         setReplyError(messageForCode(result.code));
         return;
@@ -83,15 +88,34 @@ export function CommentThread({
       return;
     }
 
-    const result = await addReplyAction(questionId, parentId, validated.value.body);
-    setReplySaving(false);
+    const pendingId = `pending-${crypto.randomUUID()}`;
+    const body = validated.value.body;
+    onComments((current) =>
+      insertReply(current, parentId, {
+        id: pendingId,
+        optionId: myOptionId || current.find((comment) => comment.id === parentId)?.optionId || "",
+        body,
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+        likedByMe: false,
+        mine: true,
+      }),
+    );
+    setReplyBody("");
+    setOpenReplyId(null);
+
+    const result = await addReplyLive(questionId, parentId, body);
+    replyLock.current = false;
     if (!result.ok) {
+      onComments((current) => removeReply(current, pendingId));
+      setReplyBody(body);
+      setOpenReplyId(parentId);
       setReplyError(result.message);
       return;
     }
-    onComments(result.comments);
-    setReplyBody("");
-    setOpenReplyId(null);
+    if (result.comments) {
+      onComments((current) => adoptServerComments(current, result.comments ?? []));
+    }
   }
 
   return (
@@ -105,7 +129,6 @@ export function CommentThread({
             mode={mode}
             demo={demo}
             onDemoState={onDemoState}
-            likeSaving={likeSavingId === comment.id}
             likeError={likeError?.id === comment.id ? likeError.message : null}
             replyOpen={openReplyId === comment.id}
             onLike={() => void like(comment.id)}
@@ -158,11 +181,9 @@ export function CommentThread({
                 </button>
                 <button
                   type="submit"
-                  disabled={replySaving}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-card"
                 >
-                  {replySaving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                  {replySaving ? "저장 중" : "답글 남기기"}
+                  답글 남기기
                 </button>
               </div>
             </form>
@@ -178,7 +199,6 @@ export function CommentThread({
                     mode={mode}
                     demo={demo}
                     onDemoState={onDemoState}
-                    likeSaving={likeSavingId === reply.id}
                     likeError={likeError?.id === reply.id ? likeError.message : null}
                     replyOpen={false}
                     onLike={() => void like(reply.id)}
@@ -220,7 +240,6 @@ function CommentActions({
   mode,
   demo,
   onDemoState,
-  likeSaving,
   likeError,
   replyOpen,
   onLike,
@@ -231,7 +250,6 @@ function CommentActions({
   mode: DataMode;
   demo: DemoState;
   onDemoState: (state: DemoState) => void;
-  likeSaving: boolean;
   likeError: string | null;
   replyOpen: boolean;
   onLike: () => void;
@@ -247,7 +265,7 @@ function CommentActions({
         <button
           type="button"
           onClick={onLike}
-          disabled={item.mine || likeSaving}
+          disabled={item.mine || item.id.startsWith("pending-")}
           aria-pressed={item.likedByMe}
           aria-label={item.mine ? "내 글은 추천할 수 없습니다" : item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
           className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold disabled:opacity-50 ${
@@ -270,7 +288,9 @@ function CommentActions({
             답글
           </button>
         ) : null}
-        <ReportForm mode={mode} targetType="comment" targetId={item.id} demoState={demo} onDemoState={onDemoState} />
+        {item.id.startsWith("pending-") ? null : (
+          <ReportForm mode={mode} targetType="comment" targetId={item.id} demoState={demo} onDemoState={onDemoState} />
+        )}
       </div>
       {likeError ? (
         <p className="mt-1 text-sm text-danger" role="alert">

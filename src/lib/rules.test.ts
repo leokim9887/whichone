@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { adoptServerComments, insertReply, removeReply, toggleLocalLike } from "./comment-updates.ts";
 import { filterQuestions, popularQuestions } from "./catalog.ts";
 import { hashString, isDateKey, koreaDateKey, pickDailyQuestion, pickDailyQuestions } from "./daily.ts";
 import { addDemoComment, addDemoReply, castDemoVote, EMPTY_DEMO_STATE, toggleDemoLike } from "./demo-state.ts";
@@ -222,6 +223,79 @@ describe("comment threads", () => {
     ]);
     assert.deepEqual(legacy[0]?.replies, []);
     assert.equal(legacy[0]?.likeCount, 0);
+  });
+});
+
+describe("comment updates", () => {
+  const thread = [
+    {
+      id: "c1",
+      optionId: "o1",
+      body: "이유",
+      createdAt: "2026-10-26T00:00:00.000Z",
+      likeCount: 1,
+      likedByMe: false,
+      mine: false,
+      replies: [
+        {
+          id: "r1",
+          optionId: "o2",
+          body: "답글",
+          createdAt: "2026-10-26T01:00:00.000Z",
+          likeCount: 0,
+          likedByMe: false,
+          mine: true,
+        },
+      ],
+    },
+  ];
+
+  it("toggles a recommendation immediately and leaves my own reply unchanged", () => {
+    const liked = toggleLocalLike(thread, "c1");
+    assert.equal(liked[0]?.likedByMe, true);
+    assert.equal(liked[0]?.likeCount, 2);
+    const own = toggleLocalLike(liked, "r1");
+    assert.equal(own[0]?.replies[0]?.likedByMe, false);
+    const undone = toggleLocalLike(liked, "c1");
+    assert.equal(undone[0]?.likeCount, 1);
+  });
+
+  it("shows a reply at once and keeps the new recommendation when the server list arrives", () => {
+    const withReply = insertReply(thread, "c1", {
+      id: "pending-1",
+      optionId: "o1",
+      body: "바로 보이는 답글",
+      createdAt: "2026-10-26T02:00:00.000Z",
+      likeCount: 0,
+      likedByMe: false,
+      mine: true,
+    });
+    assert.equal(withReply[0]?.replies[1]?.body, "바로 보이는 답글");
+    const liked = toggleLocalLike(withReply, "c1");
+    const server = removeReply(withReply, "pending-1");
+    const adopted = adoptServerComments(liked, [
+      {
+        ...server[0],
+        likedByMe: false,
+        likeCount: 1,
+        replies: [
+          ...server[0].replies,
+          {
+            id: "real-reply",
+            optionId: "o1",
+            body: "바로 보이는 답글",
+            createdAt: "2026-10-26T02:00:00.000Z",
+            likeCount: 0,
+            likedByMe: false,
+            mine: true,
+          },
+        ],
+      },
+    ]);
+    assert.equal(adopted[0]?.likedByMe, true);
+    assert.equal(adopted[0]?.likeCount, 2);
+    assert.equal(adopted[0]?.replies.some((reply) => reply.id === "pending-1"), false);
+    assert.equal(adopted[0]?.replies.some((reply) => reply.id === "real-reply"), true);
   });
 });
 
