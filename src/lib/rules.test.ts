@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { filterQuestions, popularQuestions } from "./catalog.ts";
-import { hashString, koreaDateKey, pickDailyQuestion } from "./daily.ts";
+import { hashString, isDateKey, koreaDateKey, pickDailyQuestion } from "./daily.ts";
 import { addDemoComment, castDemoVote, EMPTY_DEMO_STATE } from "./demo-state.ts";
 import { toPercentages } from "./percentages.ts";
 import { buildSummary } from "./results.ts";
@@ -82,6 +82,8 @@ describe("daily question", () => {
   it("uses the Korea date, not UTC", () => {
     assert.equal(koreaDateKey(new Date("2026-10-23T14:30:00.000Z")), "2026-10-23");
     assert.equal(koreaDateKey(new Date("2026-10-23T15:30:00.000Z")), "2026-10-24");
+    assert.equal(isDateKey("2026-10-25"), true);
+    assert.equal(isDateKey("2026-02-31"), false);
   });
 
   it("picks the same question for the same date and prefers a featured date", () => {

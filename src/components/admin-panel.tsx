@@ -4,14 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { categoryLabel } from "@/lib/categories";
+import { formatKoreanDate } from "@/lib/daily";
 import { formatDateTime } from "@/lib/format";
-import type { AdminDashboard } from "@/lib/parsers";
+import type { AdminDashboard, AdminQuestion } from "@/lib/parsers";
 import type { QuestionStatus } from "@/lib/types";
 import {
   adminSignInAction,
   adminSignOutAction,
   resolveReportAction,
   reviewSuggestionAction,
+  setDailyFeatureAction,
   setQuestionStatusAction,
 } from "@/server/actions";
 
@@ -86,10 +88,11 @@ export function AdminLogin() {
   );
 }
 
-export function AdminConsole({ dashboard }: { dashboard: AdminDashboard }) {
+export function AdminConsole({ dashboard, todayKey }: { dashboard: AdminDashboard; todayKey: string }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [featureDates, setFeatureDates] = useState<Record<string, string>>({});
 
   async function run(task: () => Promise<{ ok: boolean; message: string }>) {
     setPending(true);
@@ -209,6 +212,7 @@ export function AdminConsole({ dashboard }: { dashboard: AdminDashboard }) {
             </div>
             <p className="mt-2 text-sm text-muted">
               {categoryLabel(question.category)} · 참여 {question.participantCount}명
+              {question.dailyFeatureDate ? ` · ${formatKoreanDate(question.dailyFeatureDate)} 오늘의 질문` : ""}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {question.status !== "published" ? (
@@ -231,9 +235,68 @@ export function AdminConsole({ dashboard }: { dashboard: AdminDashboard }) {
                 </button>
               )}
             </div>
+            {question.status === "published" ? (
+              <DailyFeatureControls
+                question={question}
+                todayKey={todayKey}
+                date={featureDates[question.id] ?? question.dailyFeatureDate ?? todayKey}
+                pending={pending}
+                onDateChange={(value) => setFeatureDates((current) => ({ ...current, [question.id]: value }))}
+                onSave={(date) => void run(() => setDailyFeatureAction(question.id, date))}
+              />
+            ) : null}
           </article>
         ))}
       </section>
+    </div>
+  );
+}
+
+function DailyFeatureControls({
+  question,
+  todayKey,
+  date,
+  pending,
+  onDateChange,
+  onSave,
+}: {
+  question: AdminQuestion;
+  todayKey: string;
+  date: string;
+  pending: boolean;
+  onDateChange: (value: string) => void;
+  onSave: (date: string) => void;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap items-end gap-2">
+      <label className="text-sm font-semibold">
+        오늘의 질문 날짜
+        <input
+          type="date"
+          value={date}
+          min={todayKey}
+          onChange={(event) => onDateChange(event.target.value)}
+          className="mt-2 block rounded-2xl border border-line bg-background px-3 py-3 font-normal"
+        />
+      </label>
+      <button
+        type="button"
+        disabled={pending || !date}
+        onClick={() => onSave(date)}
+        className="inline-flex min-h-11 items-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+      >
+        이 날짜로 지정
+      </button>
+      {question.dailyFeatureDate ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => onSave("")}
+          className="inline-flex min-h-11 items-center rounded-2xl border border-line px-4 text-sm font-semibold disabled:opacity-60"
+        >
+          지정 해제
+        </button>
+      ) : null}
     </div>
   );
 }

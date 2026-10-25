@@ -260,6 +260,7 @@ export type AdminQuestion = {
   status: QuestionStatus;
   participantCount: number;
   publishedAt: string | null;
+  dailyFeatureDate: string | null;
 };
 
 export type AdminDashboard = {
@@ -332,8 +333,15 @@ function parseAdminQuestion(value: unknown): AdminQuestion {
   if (!id || !title || !category || !isCategory(category) || !status || participantCount === null) {
     throw new Error("invalid admin question");
   }
+  const dailyFeatureDate =
+    value.dailyFeatureDate === null || value.dailyFeatureDate === undefined
+      ? null
+      : asString(value.dailyFeatureDate);
   if (publishedAt === null && value.publishedAt) {
     throw new Error("invalid admin question");
   }
-  return { id, title, category, status, participantCount, publishedAt };
+  if (dailyFeatureDate === null && value.dailyFeatureDate) {
+    throw new Error("invalid admin question");
+  }
+  return { id, title, category, status, participantCount, publishedAt, dailyFeatureDate };
 }

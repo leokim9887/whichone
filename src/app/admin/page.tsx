@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { AdminConsole, AdminLogin } from "@/components/admin-panel";
+import { koreaDateKey } from "@/lib/daily";
 import { loadAdmin } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -18,6 +20,8 @@ export default function Page() {
 }
 
 async function AdminScreen() {
+  await connection();
+  const todayKey = koreaDateKey(new Date());
   const data = await loadAdmin();
 
   if (data.state === "unconfigured") {
@@ -63,5 +67,5 @@ async function AdminScreen() {
     );
   }
 
-  return <AdminConsole dashboard={data.dashboard} />;
+  return <AdminConsole dashboard={data.dashboard} todayKey={todayKey} />;
 }

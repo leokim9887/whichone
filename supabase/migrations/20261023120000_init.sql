@@ -778,7 +778,8 @@ begin
           'category', q.category,
           'status', q.status,
           'participantCount', (select count(*) from public.votes v where v.question_id = q.id),
-          'publishedAt', q.published_at
+          'publishedAt', q.published_at,
+          'dailyFeatureDate', q.daily_feature_date
         )
         order by q.created_at desc
       )
@@ -790,6 +791,61 @@ begin
       ) q
     ), '[]'::jsonb)
   );
+end;
+$$;
+
+create or replace function public.admin_set_daily_feature(p_id uuid, p_date text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_date date;
+begin
+  if not public.is_admin() then
+    return jsonb_build_object('ok', false, 'code', 'forbidden');
+  end if;
+
+  if not exists (select 1 from public.questions where id = p_id) then
+    return jsonb_build_object('ok', false, 'code', 'not_found');
+  end if;
+
+  if p_date is null or btrim(p_date) = '' then
+    update public.questions
+    set daily_feature_date = null
+    where id = p_id;
+    return jsonb_build_object('ok', true);
+  end if;
+
+  if p_date !~ '^\d{4}-\d{2}-\d{2}$' then
+    return jsonb_build_object('ok', false, 'code', 'invalid');
+  end if;
+
+  begin
+    v_date := p_date::date;
+  exception
+    when others then
+      return jsonb_build_object('ok', false, 'code', 'invalid');
+  end;
+
+  if not exists (
+    select 1 from public.questions
+    where id = p_id and status = 'published'
+  ) then
+    return jsonb_build_object('ok', false, 'code', 'invalid');
+  end if;
+
+  update public.questions
+  set daily_feature_date = null
+  where daily_feature_date = v_date
+    and id <> p_id;
+
+  update public.questions
+  set daily_feature_date = v_date
+  where id = p_id;
+
+  return jsonb_build_object('ok', true);
 end;
 $$;
 
@@ -1032,6 +1088,7 @@ revoke all on function public.submit_report(text, uuid, text) from public;
 revoke all on function public.admin_dashboard() from public;
 revoke all on function public.admin_review_suggestion(uuid, text) from public;
 revoke all on function public.admin_set_question_status(uuid, text) from public;
+revoke all on function public.admin_set_daily_feature(uuid, text) from public;
 revoke all on function public.admin_resolve_report(uuid, text) from public;
 
 grant execute on function public.is_admin() to anon, authenticated;
@@ -1047,6 +1104,7 @@ grant execute on function public.submit_report(text, uuid, text) to authenticate
 grant execute on function public.admin_dashboard() to authenticated;
 grant execute on function public.admin_review_suggestion(uuid, text) to authenticated;
 grant execute on function public.admin_set_question_status(uuid, text) to authenticated;
+grant execute on function public.admin_set_daily_feature(uuid, text) to authenticated;
 grant execute on function public.admin_resolve_report(uuid, text) to authenticated;
 
 notify pgrst, 'reload schema';

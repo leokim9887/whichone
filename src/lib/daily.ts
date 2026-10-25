@@ -9,6 +9,18 @@ export function koreaDateKey(now = new Date()): string {
   }).format(now);
 }
 
+export function isDateKey(value: string): boolean {
+  const match = DATE_KEY.exec(value);
+  if (!match) {
+    return false;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day;
+}
+
 export function formatKoreanDate(dateKey: string): string {
   const match = DATE_KEY.exec(dateKey);
   if (!match) {

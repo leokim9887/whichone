@@ -1,5 +1,6 @@
 "use server";
 
+import { isDateKey } from "@/lib/daily";
 import { isSupabaseConfigured } from "@/lib/env";
 import { messageForCode } from "@/lib/messages";
 import {
@@ -306,6 +307,20 @@ export async function setQuestionStatusAction(
   });
 }
 
+export async function setDailyFeatureAction(id: string, dateKey: string): Promise<FormActionResult> {
+  if (!isUuid(id)) {
+    return failure("invalid");
+  }
+  const date = dateKey.trim();
+  if (date && !isDateKey(date)) {
+    return failure("invalid");
+  }
+  return runAdminRpc("admin_set_daily_feature", {
+    p_id: id,
+    p_date: date,
+  });
+}
+
 export async function resolveReportAction(
   id: string,
   action: "dismiss" | "hide" | "remove",
@@ -320,7 +335,11 @@ export async function resolveReportAction(
 }
 
 async function runAdminRpc(
-  name: "admin_review_suggestion" | "admin_set_question_status" | "admin_resolve_report",
+  name:
+    | "admin_review_suggestion"
+    | "admin_set_question_status"
+    | "admin_resolve_report"
+    | "admin_set_daily_feature",
   args: Record<string, string>,
 ): Promise<FormActionResult> {
   if (!isSupabaseConfigured()) {
