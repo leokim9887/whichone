@@ -84,6 +84,21 @@ body {
   }
 }
 
+.report-dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  overflow: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.report-dialog::backdrop {
+  background: rgba(28, 25, 23, 0.42);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
   .today-progress {
