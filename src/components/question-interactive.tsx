@@ -212,14 +212,14 @@ export function QuestionInteractive({
           <div>
             <h2 className="text-lg font-bold">선택 이유</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              이유는 선택 사항입니다. 이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다. 다른 사람의 이유에는 답글과
-              추천을 남길 수 있습니다.
+              이유는 선택 사항입니다. 이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다. 내 의견을 포함한 모든 이유에
+              답글을 여러 번 남기고 추천할 수 있습니다.
             </p>
           </div>
           {participation.comment ? (
             participation.comment.status === "visible" ? (
               <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">
-                내 의견을 남겼습니다. 아래 목록에서 답글과 추천을 볼 수 있습니다.
+                내 의견을 남겼습니다. 아래 목록에서 내 의견에도 답글과 추천을 남길 수 있습니다.
               </p>
             ) : (
               <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">작성한 의견이 숨김 처리되었습니다.</p>

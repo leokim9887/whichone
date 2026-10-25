@@ -128,12 +128,9 @@ export function addDemoReply(
   if (!parent || parent.id !== parentId) {
     return { ok: false, code: "not_found" };
   }
-  if ((state.replies ?? []).some((reply) => reply.parentId === parentId)) {
-    return { ok: false, code: "already_replied" };
-  }
 
   const reply: DemoReply = {
-    id: `demo-reply-${parentId}`,
+    id: `demo-reply-${parentId}-${(state.replies ?? []).length + 1}`,
     questionId,
     parentId,
     optionId: vote.optionId,
@@ -155,7 +152,14 @@ export function toggleDemoLike(state: DemoState, questionId: string, commentId: 
   if (root?.id !== commentId && !reply) {
     return { ok: false, code: "not_found" };
   }
-  return { ok: false, code: "own_like" };
+  const next = clone(state);
+  const liked = Boolean(next.likes[commentId]);
+  if (liked) {
+    delete next.likes[commentId];
+  } else {
+    next.likes[commentId] = true;
+  }
+  return { ok: true, state: next, value: !liked };
 }
 
 export function demoPublicComments(state: DemoState, questionId: string): PublicComment[] {

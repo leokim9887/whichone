@@ -11,8 +11,8 @@ function flip(item: PublicReply): PublicReply {
 
 export function toggleLocalLike(comments: readonly PublicComment[], commentId: string): PublicComment[] {
   return comments.map((comment) => ({
-    ...(comment.id === commentId && !comment.mine ? flip(comment) : comment),
-    replies: comment.replies.map((reply) => (reply.id === commentId && !reply.mine ? flip(reply) : reply)),
+    ...(comment.id === commentId ? flip(comment) : comment),
+    replies: comment.replies.map((reply) => (reply.id === commentId ? flip(reply) : reply)),
   }));
 }
 
@@ -40,7 +40,7 @@ export function adoptServerComments(local: readonly PublicComment[], server: rea
 
   const apply = (item: PublicReply): PublicReply => {
     const kept = likes.get(item.id);
-    if (!kept || item.mine) {
+    if (!kept) {
       return item;
     }
     return { ...item, likedByMe: kept.likedByMe, likeCount: kept.likeCount };

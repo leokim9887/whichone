@@ -186,9 +186,15 @@ describe("demo votes", () => {
       return;
     }
     const secondReply = addDemoReply(reply.state, "q1", withVote.value.id, "한 번 더");
-    assert.deepEqual(secondReply, { ok: false, code: "already_replied" });
+    assert.equal(secondReply.ok, true);
+    if (secondReply.ok) {
+      assert.notEqual(secondReply.value.id, reply.value.id);
+    }
     const ownLike = toggleDemoLike(reply.state, "q1", withVote.value.id);
-    assert.deepEqual(ownLike, { ok: false, code: "own_like" });
+    assert.equal(ownLike.ok, true);
+    if (ownLike.ok) {
+      assert.equal(ownLike.state.likes[withVote.value.id], true);
+    }
   });
 });
 
@@ -250,12 +256,13 @@ describe("comment updates", () => {
     },
   ];
 
-  it("toggles a recommendation immediately and leaves my own reply unchanged", () => {
+  it("toggles a recommendation on someone else's comment and on my own reply", () => {
     const liked = toggleLocalLike(thread, "c1");
     assert.equal(liked[0]?.likedByMe, true);
     assert.equal(liked[0]?.likeCount, 2);
     const own = toggleLocalLike(liked, "r1");
-    assert.equal(own[0]?.replies[0]?.likedByMe, false);
+    assert.equal(own[0]?.replies[0]?.likedByMe, true);
+    assert.equal(own[0]?.replies[0]?.likeCount, 1);
     const undone = toggleLocalLike(liked, "c1");
     assert.equal(undone[0]?.likeCount, 1);
   });

@@ -49,7 +49,9 @@ export function CommentThread({
       const result = toggleDemoLike(demo, questionId, commentId);
       if (!result.ok) {
         setLikeError({ id: commentId, message: messageForCode(result.code) });
+        return;
       }
+      onDemoState(result.state);
       return;
     }
 
@@ -161,7 +163,7 @@ export function CommentThread({
               <p className="text-right text-xs text-muted">
                 {replyBody.length}/{LIMITS.comment}
               </p>
-              <p className="text-xs leading-5 text-muted">이름은 표시되지 않으며, 한 의견에 답글은 한 번만 남길 수 있습니다.</p>
+              <p className="text-xs leading-5 text-muted">이름은 표시되지 않습니다. 같은 의견에 답글을 여러 번 남길 수 있습니다.</p>
               {replyError ? (
                 <p className="text-sm text-danger" role="alert">
                   {replyError}
@@ -265,9 +267,9 @@ function CommentActions({
         <button
           type="button"
           onClick={onLike}
-          disabled={item.mine || item.id.startsWith("pending-")}
+          disabled={item.id.startsWith("pending-")}
           aria-pressed={item.likedByMe}
-          aria-label={item.mine ? "내 글은 추천할 수 없습니다" : item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
+          aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
           className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold disabled:opacity-50 ${
             item.likedByMe ? "bg-accent-soft text-accent-strong" : "text-muted"
           }`}
