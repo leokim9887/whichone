@@ -1,0 +1,15 @@
+---
+description: 코드 수정을 마치면 main에 올려 Vercel 배포를 실행한다
+alwaysApply: true
+---
+
+# Vercel 자동 배포
+
+이 저장소는 사용자가 직접 `git add`, `git commit`, `git push`를 하지 않는다. 요청한 코드 변경을 끝내면 같은 턴에서 `main`에 커밋하고 `origin`으로 push한다. Vercel은 그 push로 배포된다.
+
+- 변경이 없으면 커밋하지 않는다.
+- `.env`, `.env.local`, 비밀 키는 커밋하지 않는다.
+- `main`이 아닌 브랜치, 실패한 빌드, 사용자가 이번 변경은 배포하지 말라고 한 경우에는 push하지 않는다.
+- `--force`와 설정 변경용 `git config`는 사용하지 않는다.
+- 커밋 메시지는 변경 이유를 한 문장으로 쓴다.
+- push가 끝나면 배포가 시작됐다는 점과 커밋 메시지를 알린다.
