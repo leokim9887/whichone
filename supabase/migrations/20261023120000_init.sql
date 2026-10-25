@@ -61,6 +61,7 @@ create table if not exists public.questions (
   title text not null check (char_length(btrim(title)) between 1 and 100),
   description text check (description is null or char_length(description) between 1 and 500),
   category public.question_category not null,
+  topic text,
   status public.question_status not null default 'draft',
   created_at timestamptz not null default now(),
   published_at timestamptz,
@@ -104,6 +105,7 @@ create table if not exists public.question_suggestions (
   title text not null check (char_length(btrim(title)) between 1 and 100),
   description text check (description is null or char_length(description) between 1 and 500),
   category public.question_category not null,
+  topic text,
   options jsonb not null,
   user_id uuid references auth.users (id) on delete set null,
   status public.suggestion_status not null default 'pending',
@@ -283,6 +285,7 @@ as $$
         'title', q.title,
         'description', q.description,
         'category', q.category,
+        'topic', q.topic,
         'publishedAt', q.published_at,
         'createdAt', q.created_at,
         'dailyFeatureDate', q.daily_feature_date,
@@ -336,6 +339,7 @@ begin
       'title', q.title,
       'description', q.description,
       'category', q.category,
+      'topic', q.topic,
       'publishedAt', q.published_at,
       'createdAt', q.created_at,
       'dailyFeatureDate', q.daily_feature_date,
@@ -588,6 +592,7 @@ create or replace function public.submit_suggestion(
   p_title text,
   p_description text,
   p_category text,
+  p_topic text,
   p_options jsonb
 )
 returns jsonb
@@ -615,6 +620,17 @@ begin
     return jsonb_build_object('ok', false, 'code', 'invalid');
   end if;
   if v_description is not null and char_length(v_description) > 500 then
+    return jsonb_build_object('ok', false, 'code', 'invalid');
+  end if;
+
+  if not (
+    (v_category = 'daily' and p_topic in ('routine', 'time', 'habit'))
+    or (v_category = 'love' and p_topic in ('contact', 'boundary', 'date'))
+    or (v_category = 'money' and p_topic in ('save', 'income', 'windfall'))
+    or (v_category = 'work' and p_topic in ('task', 'people', 'pay'))
+    or (v_category = 'food' and p_topic in ('menu', 'alone', 'together'))
+    or (v_category = 'values' and p_topic in ('relation', 'help', 'rest'))
+  ) then
     return jsonb_build_object('ok', false, 'code', 'invalid');
   end if;
 
@@ -650,8 +666,8 @@ begin
     return jsonb_build_object('ok', false, 'code', 'rate_limited');
   end if;
 
-  insert into public.question_suggestions (title, description, category, options, user_id, status)
-  values (v_title, v_description, v_category, to_jsonb(cleaned), auth.uid(), 'pending');
+  insert into public.question_suggestions (title, description, category, topic, options, user_id, status)
+  values (v_title, v_description, v_category, p_topic, to_jsonb(cleaned), auth.uid(), 'pending');
 
   return jsonb_build_object('ok', true);
 end;
@@ -738,6 +754,7 @@ begin
           'title', s.title,
           'description', s.description,
           'category', s.category,
+          'topic', s.topic,
           'options', s.options,
           'createdAt', s.created_at
         )
@@ -776,6 +793,7 @@ begin
           'id', q.id,
           'title', q.title,
           'category', q.category,
+          'topic', q.topic,
           'status', q.status,
           'participantCount', (select count(*) from public.votes v where v.question_id = q.id),
           'publishedAt', q.published_at,
@@ -883,8 +901,8 @@ begin
     return jsonb_build_object('ok', true);
   end if;
 
-  insert into public.questions (title, description, category, status, published_at, created_by)
-  values (s.title, s.description, s.category, 'published', now(), s.user_id)
+  insert into public.questions (title, description, category, topic, status, published_at, created_by)
+  values (s.title, s.description, s.category, s.topic, 'published', now(), s.user_id)
   returning id into new_question;
 
   for opt in select value from jsonb_array_elements_text(s.options) as t(value)
@@ -1083,7 +1101,7 @@ revoke all on function public.list_visible_comments(uuid) from public;
 revoke all on function public.my_voted_question_ids() from public;
 revoke all on function public.cast_vote(uuid, uuid) from public;
 revoke all on function public.add_comment(uuid, text) from public;
-revoke all on function public.submit_suggestion(text, text, text, jsonb) from public;
+revoke all on function public.submit_suggestion(text, text, text, text, jsonb) from public;
 revoke all on function public.submit_report(text, uuid, text) from public;
 revoke all on function public.admin_dashboard() from public;
 revoke all on function public.admin_review_suggestion(uuid, text) from public;
@@ -1099,7 +1117,7 @@ grant execute on function public.list_visible_comments(uuid) to anon, authentica
 grant execute on function public.my_voted_question_ids() to anon, authenticated;
 grant execute on function public.cast_vote(uuid, uuid) to authenticated;
 grant execute on function public.add_comment(uuid, text) to authenticated;
-grant execute on function public.submit_suggestion(text, text, text, jsonb) to authenticated;
+grant execute on function public.submit_suggestion(text, text, text, text, jsonb) to authenticated;
 grant execute on function public.submit_report(text, uuid, text) to authenticated;
 grant execute on function public.admin_dashboard() to authenticated;
 grant execute on function public.admin_review_suggestion(uuid, text) to authenticated;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { categoryLabel } from "@/lib/categories";
+import { categoryTopicLabel } from "@/lib/topics";
 import { formatKoreanDate } from "@/lib/daily";
 import { formatDateTime } from "@/lib/format";
 import type { AdminDashboard, AdminQuestion } from "@/lib/parsers";
@@ -128,7 +128,7 @@ export function AdminConsole({ dashboard, todayKey }: { dashboard: AdminDashboar
         {dashboard.suggestions.length === 0 ? <p className="text-sm text-muted">대기 중인 제안이 없습니다.</p> : null}
         {dashboard.suggestions.map((suggestion) => (
           <article key={suggestion.id} className="rounded-3xl border border-line bg-card p-5">
-            <p className="text-xs font-semibold text-accent">{categoryLabel(suggestion.category)}</p>
+            <p className="text-xs font-semibold text-accent">{categoryTopicLabel(suggestion.category, suggestion.topic)}</p>
             <h3 className="mt-1 text-lg font-bold">{suggestion.title}</h3>
             {suggestion.description ? <p className="mt-2 text-sm leading-6 text-muted">{suggestion.description}</p> : null}
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
@@ -211,7 +211,7 @@ export function AdminConsole({ dashboard, todayKey }: { dashboard: AdminDashboar
               </span>
             </div>
             <p className="mt-2 text-sm text-muted">
-              {categoryLabel(question.category)} · 참여 {question.participantCount}명
+              {categoryTopicLabel(question.category, question.topic)} · 참여 {question.participantCount}명
               {question.dailyFeatureDate ? ` · ${formatKoreanDate(question.dailyFeatureDate)} 오늘의 질문` : ""}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">

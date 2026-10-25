@@ -156,6 +156,7 @@ export async function submitSuggestionAction(input: {
   title: string;
   description: string;
   category: string;
+  topic: string;
   options: string[];
   company: string;
 }): Promise<FormActionResult> {
@@ -182,6 +183,7 @@ export async function submitSuggestionAction(input: {
       p_title: validated.value.title,
       p_description: validated.value.description,
       p_category: validated.value.category,
+      p_topic: validated.value.topic,
       p_options: validated.value.options,
     });
     if (error) {

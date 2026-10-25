@@ -24,7 +24,7 @@ async function SuggestScreen() {
       <header>
         <h1 className="text-3xl font-bold">질문 제안</h1>
         <p className="mt-3 leading-7 text-muted">
-          제목, 주제, 선택지 2개 이상을 보내 주세요. 제안은 바로 공개되지 않고, 운영자가 검토한 뒤에만 올라갑니다.
+          주제를 고른 뒤 세부 갈래의 예시를 눌러 시작할 수 있습니다. 예시는 고쳐 써도 됩니다. 제안은 검토한 뒤에만 공개됩니다.
         </p>
       </header>
       {mode === "demo" ? (

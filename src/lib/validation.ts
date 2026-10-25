@@ -1,6 +1,7 @@
 import { isCategory } from "@/lib/categories";
 import { LIMITS } from "@/lib/limits";
 import { normalizeLine } from "@/lib/text";
+import { topicBelongsTo } from "@/lib/topics";
 import { REPORT_REASONS, type Category, type ReportReason, type SuggestionDraft } from "@/lib/types";
 
 export type FieldErrors = Record<string, string>;
@@ -17,6 +18,7 @@ export function validateSuggestion(input: {
   title: string;
   description: string;
   category: string;
+  topic: string;
   options: string[];
 }): ValidationResult<SuggestionDraft> {
   const errors: FieldErrors = {};
@@ -36,6 +38,8 @@ export function validateSuggestion(input: {
 
   if (!isCategory(input.category)) {
     errors.category = "주제를 선택해 주세요.";
+  } else if (!topicBelongsTo(input.topic, input.category)) {
+    errors.topic = "세부 주제를 선택해 주세요.";
   }
 
   const filled = options.map((option, index) => ({ option, index })).filter((item) => item.option);
@@ -69,6 +73,7 @@ export function validateSuggestion(input: {
       title,
       description,
       category: input.category as Category,
+      topic: input.topic,
       options: filled.map((item) => item.option),
     },
   };

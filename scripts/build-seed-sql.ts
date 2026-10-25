@@ -17,7 +17,7 @@ const lines: string[] = [
 
 for (const question of SEED_QUESTIONS) {
   lines.push(
-    `insert into public.questions (id, title, description, category, status, created_at, published_at, daily_feature_date) values (${sqlString(question.id)}, ${sqlString(question.title)}, ${question.description ? sqlString(question.description) : "null"}, ${sqlString(question.category)}::public.question_category, 'published', ${sqlString(question.createdAt)}::timestamptz, ${sqlString(question.publishedAt)}::timestamptz, null);`,
+    `insert into public.questions (id, title, description, category, topic, status, created_at, published_at, daily_feature_date) values (${sqlString(question.id)}, ${sqlString(question.title)}, ${question.description ? sqlString(question.description) : "null"}, ${sqlString(question.category)}::public.question_category, ${question.topic ? sqlString(question.topic) : "null"}, 'published', ${sqlString(question.createdAt)}::timestamptz, ${sqlString(question.publishedAt)}::timestamptz, null);`,
   );
   for (const option of question.options) {
     lines.push(

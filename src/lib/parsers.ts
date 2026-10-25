@@ -1,4 +1,5 @@
 import { isCategory } from "@/lib/categories";
+import { isTopic } from "@/lib/topics";
 import type {
   Category,
   CommentStatus,
@@ -41,6 +42,7 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
   const id = asString(value.id);
   const title = asString(value.title);
   const category = asString(value.category);
+  const topic = asTopic(value.topic);
   const publishedAt = asString(value.publishedAt);
   const createdAt = asString(value.createdAt) ?? publishedAt;
   const participantCount = asNumber(value.participantCount);
@@ -70,12 +72,20 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     title,
     description,
     category,
+    topic,
     publishedAt,
     createdAt,
     dailyFeatureDate,
     participantCount,
     options,
   };
+}
+
+function asTopic(value: unknown): string | null {
+  if (typeof value !== "string" || !isTopic(value)) {
+    return null;
+  }
+  return value;
 }
 
 function parseOption(value: unknown): Option {
@@ -240,6 +250,7 @@ export type AdminSuggestion = {
   title: string;
   description: string | null;
   category: Category;
+  topic: string | null;
   options: string[];
   createdAt: string;
 };
@@ -257,6 +268,7 @@ export type AdminQuestion = {
   id: string;
   title: string;
   category: Category;
+  topic: string | null;
   status: QuestionStatus;
   participantCount: number;
   publishedAt: string | null;
@@ -299,6 +311,7 @@ function parseAdminSuggestion(value: unknown): AdminSuggestion {
     title,
     description,
     category,
+    topic: asTopic(value.topic),
     options: value.options,
     createdAt,
   };
@@ -343,5 +356,5 @@ function parseAdminQuestion(value: unknown): AdminQuestion {
   if (dailyFeatureDate === null && value.dailyFeatureDate) {
     throw new Error("invalid admin question");
   }
-  return { id, title, category, status, participantCount, publishedAt, dailyFeatureDate };
+  return { id, title, category, topic: asTopic(value.topic), status, participantCount, publishedAt, dailyFeatureDate };
 }

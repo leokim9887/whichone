@@ -8,7 +8,8 @@ import { addDemoSuggestion } from "@/lib/demo-state";
 import { readDemoState, writeDemoState } from "@/lib/demo-storage";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
-import { CATEGORIES, type DataMode } from "@/lib/types";
+import { topicById, topicsFor, type Topic } from "@/lib/topics";
+import { CATEGORIES, type Category, type DataMode } from "@/lib/types";
 import { validateSuggestion } from "@/lib/validation";
 import { submitSuggestionAction, type FieldErrors } from "@/server/actions";
 
@@ -17,6 +18,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [topic, setTopic] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [company, setCompany] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -29,7 +31,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
 
   async function submit() {
     setMessage(null);
-    const validated = validateSuggestion({ title, description, category, options });
+    const validated = validateSuggestion({ title, description, category, topic, options });
     if (!validated.ok) {
       setErrors(validated.errors);
       return;
@@ -49,6 +51,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       setTitle("");
       setDescription("");
       setCategory("");
+      setTopic("");
       setOptions(["", ""]);
       return;
     }
@@ -57,6 +60,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       title,
       description,
       category,
+      topic,
       options,
       company,
     });
@@ -70,9 +74,32 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
     setTitle("");
     setDescription("");
     setCategory("");
+    setTopic("");
     setOptions(["", ""]);
     router.refresh();
   }
+
+  function chooseCategory(next: string) {
+    setCategory(next);
+    setTopic("");
+  }
+
+  function chooseTopic(next: Topic) {
+    const previous = topicById(topic);
+    setTopic(next.id);
+    setTitle((current) => (!current.trim() || current === previous?.exampleTitle ? next.exampleTitle : current));
+    setOptions((current) => {
+      const untouched =
+        current.every((item) => !item.trim()) ||
+        (previous !== null &&
+          current[0] === previous.exampleOptions[0] &&
+          current[1] === previous.exampleOptions[1] &&
+          current.slice(2).every((item) => !item.trim()));
+      return untouched ? [next.exampleOptions[0], next.exampleOptions[1]] : current;
+    });
+  }
+
+  const topicChoices = isCategoryValue(category) ? topicsFor(category) : [];
 
   return (
     <form
@@ -96,7 +123,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       </p>
 
       <Field label="주제" error={errors.category} required>
-        <select value={category} onChange={(event) => setCategory(event.target.value)} required className={inputClass}>
+        <select value={category} onChange={(event) => chooseCategory(event.target.value)} required className={inputClass}>
           <option value="">주제를 선택하세요</option>
           {CATEGORIES.map((item) => (
             <option key={item} value={item}>
@@ -105,6 +132,33 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
           ))}
         </select>
       </Field>
+
+      {topicChoices.length > 0 ? (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold">세부 주제</legend>
+          <p className="text-sm leading-6 text-muted">예시를 누르면 질문과 선택지가 채워집니다. 그대로 두거나 고쳐 쓰세요.</p>
+          <div className="grid gap-2">
+            {topicChoices.map((item) => {
+              const active = topic === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => chooseTopic(item)}
+                  className={`rounded-2xl border px-4 py-3 text-left ${active ? "border-foreground bg-foreground text-card" : "border-line bg-background"}`}
+                >
+                  <span className="block text-sm font-semibold">{item.label}</span>
+                  <span className={`mt-1 block text-xs leading-5 ${active ? "text-card/80" : "text-muted"}`}>
+                    예: {item.exampleOptions[0]} / {item.exampleOptions[1]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {errors.topic ? <p className="text-sm text-danger">{errors.topic}</p> : null}
+        </fieldset>
+      ) : null}
 
       <Field label="설명" error={errors.description}>
         <textarea
@@ -187,6 +241,10 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
 }
 
 const inputClass = "mt-2 w-full rounded-2xl border border-line bg-background px-3 py-3 text-base";
+
+function isCategoryValue(value: string): value is Category {
+  return CATEGORIES.some((item) => item === value);
+}
 
 function Field({
   label,

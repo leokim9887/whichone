@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
 import { ShareActions } from "@/components/share-actions";
-import { categoryLabel } from "@/lib/categories";
+import { categoryTopicLabel } from "@/lib/topics";
 import { addDemoComment, castDemoVote } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatDateTime, formatParticipantCount } from "@/lib/format";
@@ -153,7 +153,7 @@ export function QuestionInteractive({
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm font-semibold text-accent">{categoryLabel(question.category)}</p>
+        <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
         <h1 className="mt-2 text-3xl font-bold leading-snug">{question.title}</h1>
         {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
         <p className="mt-3 text-sm text-muted">

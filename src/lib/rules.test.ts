@@ -8,6 +8,7 @@ import { toPercentages } from "./percentages.ts";
 import { buildSummary } from "./results.ts";
 import { SEED_QUESTIONS } from "./seed-questions.ts";
 import { CATEGORIES } from "./types.ts";
+import { topicBelongsTo } from "./topics.ts";
 import { validateComment, validateSuggestion } from "./validation.ts";
 
 describe("percentages", () => {
@@ -106,6 +107,7 @@ describe("suggestion and comment validation", () => {
       title: "  ",
       description: "",
       category: "daily",
+      topic: "routine",
       options: ["하나만"],
     });
     assert.equal(missing.ok, false);
@@ -114,6 +116,7 @@ describe("suggestion and comment validation", () => {
       title: "제목",
       description: "",
       category: "food",
+      topic: "menu",
       options: ["같은 선택", "같은 선택"],
     });
     assert.equal(duplicate.ok, false);
@@ -122,6 +125,7 @@ describe("suggestion and comment validation", () => {
       title: "제".repeat(101),
       description: "",
       category: "work",
+      topic: "task",
       options: ["하나", "둘"],
     });
     assert.equal(tooLong.ok, false);
@@ -132,6 +136,7 @@ describe("suggestion and comment validation", () => {
       title: "  점심은 무엇으로  ",
       description: "",
       category: "food",
+      topic: "menu",
       options: [" 김치찌개 ", "된장찌개", ""],
     });
     assert.equal(accepted.ok, true);
@@ -167,11 +172,14 @@ describe("demo votes", () => {
 
 describe("catalog and seed", () => {
   it("filters by category and search text", () => {
-    const food = filterQuestions(SEED_QUESTIONS, "food", "");
+    const food = filterQuestions(SEED_QUESTIONS, "food", "", "");
     assert.ok(food.every((question) => question.category === "food"));
-    const found = filterQuestions(SEED_QUESTIONS, "all", "월급");
+    const menus = filterQuestions(SEED_QUESTIONS, "food", "menu", "");
+    assert.ok(menus.length > 0);
+    assert.ok(menus.every((question) => question.topic === "menu"));
+    const found = filterQuestions(SEED_QUESTIONS, "all", "", "월급");
     assert.ok(found.some((question) => question.title.includes("월급")));
-    assert.equal(filterQuestions(SEED_QUESTIONS, "love", "없는검색어").length, 0);
+    assert.equal(filterQuestions(SEED_QUESTIONS, "love", "", "없는검색어").length, 0);
   });
 
   it("does not pretend there is a popular ranking before any shared votes", () => {
@@ -185,6 +193,9 @@ describe("catalog and seed", () => {
     for (const category of CATEGORIES) {
       const matches = SEED_QUESTIONS.filter((question) => question.category === category);
       assert.ok(matches.length >= 2, category);
+    }
+    for (const question of SEED_QUESTIONS) {
+      assert.equal(topicBelongsTo(question.topic ?? "", question.category), true);
     }
     const titles = new Set<string>();
     for (const question of SEED_QUESTIONS) {

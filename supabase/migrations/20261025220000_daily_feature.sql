@@ -21,6 +21,7 @@ begin
           'title', s.title,
           'description', s.description,
           'category', s.category,
+          'topic', s.topic,
           'options', s.options,
           'createdAt', s.created_at
         )
@@ -59,6 +60,7 @@ begin
           'id', q.id,
           'title', q.title,
           'category', q.category,
+          'topic', q.topic,
           'status', q.status,
           'participantCount', (select count(*) from public.votes v where v.question_id = q.id),
           'publishedAt', q.published_at,

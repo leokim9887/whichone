@@ -6,18 +6,22 @@ import { CATEGORY_FILTERS, CATEGORY_LABEL, type CategoryFilter } from "@/lib/cat
 import { filterQuestions, latestQuestions, popularQuestions } from "@/lib/catalog";
 import { formatKoreanDate } from "@/lib/daily";
 import { formatParticipantCount } from "@/lib/format";
+import { categoryTopicLabel, topicsFor } from "@/lib/topics";
+import type { Category } from "@/lib/types";
 import type { HomeData } from "@/lib/data";
 
 export function HomeView({
   data,
   category,
+  topic,
   query,
 }: {
   data: HomeData;
   category: CategoryFilter;
+  topic: string;
   query: string;
 }) {
-  const filtered = filterQuestions(data.questions, category, query);
+  const filtered = filterQuestions(data.questions, category, topic, query);
   const popular = popularQuestions(filtered);
   const latest = latestQuestions(filtered);
   const voted = new Set(data.votedIds);
@@ -57,7 +61,7 @@ export function HomeView({
           <TodayCard
             id={data.today.id}
             title={data.today.title}
-            category={CATEGORY_LABEL[data.today.category]}
+            category={categoryTopicLabel(data.today.category, data.today.topic)}
             dateLabel={formatKoreanDate(data.dateKey)}
             countLabel={
               data.mode === "demo" ? "데모에서는 공유 집계를 보여 주지 않습니다" : formatParticipantCount(data.today.participantCount)
@@ -71,9 +75,16 @@ export function HomeView({
           <section className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <h2 className="text-xl font-bold">주제별 질문</h2>
-              <SearchForm category={category} query={query} />
+              <SearchForm category={category} topic={topic} query={query} />
             </div>
             <CategoryLinks category={category} query={query} />
+            {category !== "all" ? (
+              <TopicLinks category={category} topic={topic} query={query} />
+            ) : (
+              <p className="text-sm leading-6 text-muted">
+                주제를 고르면 업무, 대인관계, 연봉처럼 더 좁은 갈래와 선택 예시가 나옵니다.
+              </p>
+            )}
             {filtered.length === 0 ? (
               <EmptyCopy
                 title={query ? "검색 결과가 없습니다" : "이 주제의 질문이 아직 없습니다"}
@@ -157,10 +168,11 @@ function TodayCard({
   );
 }
 
-function SearchForm({ category, query }: { category: CategoryFilter; query: string }) {
+function SearchForm({ category, topic, query }: { category: CategoryFilter; topic: string; query: string }) {
   return (
     <form action="/" className="flex w-full gap-2 sm:max-w-sm">
       {category !== "all" ? <input type="hidden" name="category" value={category} /> : null}
+      {topic ? <input type="hidden" name="topic" value={topic} /> : null}
       <label className="sr-only" htmlFor="question-search">
         질문 검색
       </label>
@@ -176,6 +188,67 @@ function SearchForm({ category, query }: { category: CategoryFilter; query: stri
         검색
       </button>
     </form>
+  );
+}
+
+function TopicLinks({
+  category,
+  topic,
+  query,
+}: {
+  category: Category;
+  topic: string;
+  query: string;
+}) {
+  const items = topicsFor(category);
+  return (
+    <div className="grid gap-2 sm:grid-cols-3">
+      <TopicLink href={topicHref(category, "", query)} active={!topic} label="이 주제 전체" example="모든 세부 질문을 봅니다" />
+      {items.map((item) => (
+        <TopicLink
+          key={item.id}
+          href={topicHref(category, item.id, query)}
+          active={topic === item.id}
+          label={item.label}
+          example={`${item.exampleOptions[0]} / ${item.exampleOptions[1]}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function topicHref(category: Category, topic: string, query: string): string {
+  const params = new URLSearchParams();
+  params.set("category", category);
+  if (topic) {
+    params.set("topic", topic);
+  }
+  if (query) {
+    params.set("q", query);
+  }
+  return `/?${params.toString()}`;
+}
+
+function TopicLink({
+  href,
+  active,
+  label,
+  example,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  example: string;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`rounded-2xl border px-4 py-3 ${active ? "border-foreground bg-foreground text-card" : "border-line bg-card"}`}
+    >
+      <span className="block text-sm font-semibold">{label}</span>
+      <span className={`mt-1 block text-xs leading-5 ${active ? "text-card/80" : "text-muted"}`}>예: {example}</span>
+    </Link>
   );
 }
 

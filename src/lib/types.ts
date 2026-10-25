@@ -37,6 +37,7 @@ export type Question = {
   title: string;
   description: string | null;
   category: Category;
+  topic: string | null;
   publishedAt: string;
   createdAt: string;
   dailyFeatureDate: string | null;
@@ -87,6 +88,7 @@ export type SuggestionDraft = {
   title: string;
   description: string;
   category: Category;
+  topic: string;
   options: string[];
 };
 
