@@ -35,7 +35,7 @@ if (-not (git config user.name) -or -not (git config user.email)) {
 }
 
 $summary = ($staged | Select-Object -First 4) -join ", "
-git commit -m "WhicHOne 변경 사항을 배포: $summary"
+git commit -m "Deploy WhicHOne changes: $summary"
 if ($LASTEXITCODE -ne 0) {
   exit 0
 }
