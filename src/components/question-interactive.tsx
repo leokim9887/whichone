@@ -2,7 +2,6 @@
 
 import { Check, LoaderCircle } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
@@ -31,7 +30,6 @@ export function QuestionInteractive({
   initialComments: PublicComment[];
   participationError: string | null;
 }) {
-  const router = useRouter();
   const demo = useDemoState();
   const [liveParticipation, setLiveParticipation] = useState(initialParticipation);
   const [liveComments, setLiveComments] = useState(initialComments);
@@ -114,7 +112,6 @@ export function QuestionInteractive({
       setMessage(result.message);
       return;
     }
-    router.refresh();
   }
 
   async function saveComment() {
@@ -147,7 +144,6 @@ export function QuestionInteractive({
     setLiveParticipation(result.participation);
     setLiveComments(result.comments);
     setCommentBody("");
-    router.refresh();
   }
 
   return (
@@ -157,7 +153,9 @@ export function QuestionInteractive({
         <h1 className="mt-2 text-3xl font-bold leading-snug">{question.title}</h1>
         {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
         <p className="mt-3 text-sm text-muted">
-          {mode === "demo" ? "공유 참여자 수는 집계하지 않습니다" : formatParticipantCount(question.participantCount)}
+          {mode === "demo"
+            ? "공유 참여자 수는 집계하지 않습니다"
+            : formatParticipantCount(participation.voted ? participation.participantCount : question.participantCount)}
         </p>
       </header>
 

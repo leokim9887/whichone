@@ -1,14 +1,12 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { QuestionCard } from "@/components/question-card";
-import { CATEGORY_FILTERS, CATEGORY_LABEL, type CategoryFilter } from "@/lib/categories";
-import { filterQuestions, latestQuestions, popularQuestions } from "@/lib/catalog";
+import { HomeBrowser } from "@/components/home-browser";
 import { formatKoreanDate } from "@/lib/daily";
 import { formatParticipantCount } from "@/lib/format";
-import { categoryTopicLabel, topicsFor } from "@/lib/topics";
-import type { Category } from "@/lib/types";
+import { categoryTopicLabel } from "@/lib/topics";
 import type { HomeData } from "@/lib/data";
+import type { CategoryFilter } from "@/lib/categories";
 
 export function HomeView({
   data,
@@ -21,11 +19,6 @@ export function HomeView({
   topic: string;
   query: string;
 }) {
-  const filtered = filterQuestions(data.questions, category, topic, query);
-  const popular = popularQuestions(filtered);
-  const latest = latestQuestions(filtered);
-  const voted = new Set(data.votedIds);
-
   return (
     <div className="space-y-10">
       {data.mode === "demo" ? <DemoNotice /> : null}
@@ -71,43 +64,14 @@ export function HomeView({
       ) : null}
 
       {!data.error && data.questions.length > 0 ? (
-        <>
-          <section className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <h2 className="text-xl font-bold">주제별 질문</h2>
-              <SearchForm category={category} topic={topic} query={query} />
-            </div>
-            <CategoryLinks category={category} query={query} />
-            {category !== "all" ? (
-              <TopicLinks category={category} topic={topic} query={query} />
-            ) : (
-              <p className="text-sm leading-6 text-muted">
-                주제를 고르면 업무, 대인관계, 연봉처럼 더 좁은 갈래와 선택 예시가 나옵니다.
-              </p>
-            )}
-            {filtered.length === 0 ? (
-              <EmptyCopy
-                title={query ? "검색 결과가 없습니다" : "이 주제의 질문이 아직 없습니다"}
-                body="다른 주제나 검색어를 선택해 보세요."
-              />
-            ) : (
-              <>
-                <QuestionSection
-                  title="참여가 많은 질문"
-                  note={
-                    popular.showingRecentBecauseNoVotes
-                      ? "아직 공유된 참여가 없어 최근 질문을 보여 드립니다."
-                      : null
-                  }
-                  questions={popular.items}
-                  mode={data.mode}
-                  voted={voted}
-                />
-                <QuestionSection title="최신 질문" note={null} questions={latest} mode={data.mode} voted={voted} />
-              </>
-            )}
-          </section>
-        </>
+        <HomeBrowser
+          questions={data.questions}
+          votedIds={data.votedIds}
+          mode={data.mode}
+          initialCategory={category}
+          initialTopic={topic}
+          initialQuery={query}
+        />
       ) : null}
 
       <section className="rounded-3xl bg-foreground px-5 py-6 text-card sm:px-8">
@@ -165,146 +129,6 @@ function TodayCard({
         선택하러 가기
       </Link>
     </article>
-  );
-}
-
-function SearchForm({ category, topic, query }: { category: CategoryFilter; topic: string; query: string }) {
-  return (
-    <form action="/" className="flex w-full gap-2 sm:max-w-sm">
-      {category !== "all" ? <input type="hidden" name="category" value={category} /> : null}
-      {topic ? <input type="hidden" name="topic" value={topic} /> : null}
-      <label className="sr-only" htmlFor="question-search">
-        질문 검색
-      </label>
-      <input
-        id="question-search"
-        name="q"
-        key={query}
-        defaultValue={query}
-        placeholder="질문 검색"
-        className="min-h-11 w-full rounded-2xl border border-line bg-card px-4 text-sm outline-none"
-      />
-      <button type="submit" className="min-h-11 shrink-0 rounded-2xl border border-line bg-card px-4 text-sm font-semibold">
-        검색
-      </button>
-    </form>
-  );
-}
-
-function TopicLinks({
-  category,
-  topic,
-  query,
-}: {
-  category: Category;
-  topic: string;
-  query: string;
-}) {
-  const items = topicsFor(category);
-  return (
-    <div className="grid gap-2 sm:grid-cols-3">
-      <TopicLink href={topicHref(category, "", query)} active={!topic} label="이 주제 전체" example="모든 세부 질문을 봅니다" />
-      {items.map((item) => (
-        <TopicLink
-          key={item.id}
-          href={topicHref(category, item.id, query)}
-          active={topic === item.id}
-          label={item.label}
-          example={`${item.exampleOptions[0]} / ${item.exampleOptions[1]}`}
-        />
-      ))}
-    </div>
-  );
-}
-
-function topicHref(category: Category, topic: string, query: string): string {
-  const params = new URLSearchParams();
-  params.set("category", category);
-  if (topic) {
-    params.set("topic", topic);
-  }
-  if (query) {
-    params.set("q", query);
-  }
-  return `/?${params.toString()}`;
-}
-
-function TopicLink({
-  href,
-  active,
-  label,
-  example,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  example: string;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={`rounded-2xl border px-4 py-3 ${active ? "border-foreground bg-foreground text-card" : "border-line bg-card"}`}
-    >
-      <span className="block text-sm font-semibold">{label}</span>
-      <span className={`mt-1 block text-xs leading-5 ${active ? "text-card/80" : "text-muted"}`}>예: {example}</span>
-    </Link>
-  );
-}
-
-function CategoryLinks({ category, query }: { category: CategoryFilter; query: string }) {
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
-      {CATEGORY_FILTERS.map((item) => {
-        const params = new URLSearchParams();
-        if (item !== "all") {
-          params.set("category", item);
-        }
-        if (query) {
-          params.set("q", query);
-        }
-        const href = params.size > 0 ? `/?${params.toString()}` : "/";
-        const active = item === category;
-        return (
-          <Link
-            key={item}
-            href={href}
-            className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold ${
-              active ? "bg-foreground text-card" : "border border-line bg-card text-foreground"
-            }`}
-            aria-current={active ? "page" : undefined}
-          >
-            {item === "all" ? "전체" : CATEGORY_LABEL[item]}
-          </Link>
-        );
-      })}
-    </div>
-  );
-}
-
-function QuestionSection({
-  title,
-  note,
-  questions,
-  mode,
-  voted,
-}: {
-  title: string;
-  note: string | null;
-  questions: HomeData["questions"];
-  mode: HomeData["mode"];
-  voted: Set<string>;
-}) {
-  return (
-    <div>
-      <h3 className="text-lg font-bold">{title}</h3>
-      {note ? <p className="mt-1 text-sm text-muted">{note}</p> : null}
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {questions.map((question) => (
-          <QuestionCard key={question.id} question={question} mode={mode} voted={voted.has(question.id)} />
-        ))}
-      </div>
-    </div>
   );
 }
 

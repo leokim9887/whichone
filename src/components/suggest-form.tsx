@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 
 import { categoryLabel } from "@/lib/categories";
 import { addDemoSuggestion } from "@/lib/demo-state";
@@ -14,7 +13,6 @@ import { validateSuggestion } from "@/lib/validation";
 import { submitSuggestionAction, type FieldErrors } from "@/server/actions";
 
 export function SuggestForm({ mode }: { mode: DataMode }) {
-  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -76,7 +74,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
     setCategory("");
     setTopic("");
     setOptions(["", ""]);
-    router.refresh();
+    return;
   }
 
   function chooseCategory(next: string) {

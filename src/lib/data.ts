@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { connection } from "next/server";
 
 import { pickDailyQuestion, koreaDateKey } from "@/lib/daily";
@@ -40,9 +41,13 @@ export type QuestionData =
       question: Question;
       participation: Participation;
       comments: PublicComment[];
-      related: Question[];
       participationError: string | null;
     };
+
+const fetchPublishedQuestion = cache(async (id: string) => {
+  const supabase = createPublicSupabase();
+  return supabase.rpc("get_published_question", { p_question_id: id });
+});
 
 async function loadLiveQuestions(): Promise<Question[]> {
   const supabase = createPublicSupabase();
@@ -82,8 +87,7 @@ export async function loadHome(): Promise<HomeData> {
   }
 
   try {
-    const questions = await loadLiveQuestions();
-    const votedIds = await loadVotedIds();
+    const [questions, votedIds] = await Promise.all([loadLiveQuestions(), loadVotedIds()]);
     return {
       mode: "live",
       error: null,
@@ -122,20 +126,16 @@ export async function loadQuestion(id: string): Promise<QuestionData> {
       question,
       participation: emptyParticipation(0),
       comments: [],
-      related: relatedQuestions(questions, question),
       participationError: null,
     };
   }
 
   try {
-    const supabase = createPublicSupabase();
-    const { data, error } = await supabase.rpc("get_published_question", {
-      p_question_id: id,
-    });
-    if (error) {
+    const [published, mine] = await Promise.all([fetchPublishedQuestion(id), loadMyParticipation(id)]);
+    if (published.error) {
       return { state: "unavailable", mode };
     }
-    const parsed = parseQuestionState(data);
+    const parsed = parseQuestionState(published.data);
     if (parsed.state === "missing") {
       return { state: "missing" };
     }
@@ -143,44 +143,63 @@ export async function loadQuestion(id: string): Promise<QuestionData> {
       return { state: "unpublished", mode };
     }
 
-    const questions = await loadLiveQuestions().catch(() => [parsed.question]);
-    let participation = emptyParticipation(parsed.question.participantCount);
-    let comments: PublicComment[] = [];
-    let participationError: string | null = null;
-
-    try {
-      const authed = await createServerSupabase();
-      const participationResult = await authed.rpc("get_my_participation", {
-        p_question_id: id,
-      });
-      if (participationResult.error) {
-        participationError = "내 참여 기록을 확인하지 못했습니다. 투표는 다시 시도할 수 있습니다.";
-      } else {
-        participation = parseParticipation(participationResult.data);
-      }
-      if (participation.voted) {
-        const commentResult = await authed.rpc("list_visible_comments", {
-          p_question_id: id,
-        });
-        if (!commentResult.error) {
-          comments = parsePublicComments(commentResult.data);
-        }
-      }
-    } catch {
-      participationError = "내 참여 기록을 확인하지 못했습니다. 투표는 다시 시도할 수 있습니다.";
-    }
+    const participantCount = mine.participationError
+      ? parsed.question.participantCount
+      : mine.participation.participantCount;
 
     return {
       state: "ok",
       mode,
-      question: { ...parsed.question, participantCount: participation.participantCount },
-      participation,
-      comments,
-      related: relatedQuestions(questions, parsed.question),
-      participationError,
+      question: { ...parsed.question, participantCount },
+      participation: { ...mine.participation, participantCount },
+      comments: mine.participation.voted ? mine.comments : [],
+      participationError: mine.participationError,
     };
   } catch {
     return { state: "unavailable", mode };
+  }
+}
+
+async function loadMyParticipation(id: string): Promise<{
+  participation: Participation;
+  comments: PublicComment[];
+  participationError: string | null;
+}> {
+  try {
+    const authed = await createServerSupabase();
+    const [participationResult, commentResult] = await Promise.all([
+      authed.rpc("get_my_participation", { p_question_id: id }),
+      authed.rpc("list_visible_comments", { p_question_id: id }),
+    ]);
+    if (participationResult.error) {
+      return {
+        participation: emptyParticipation(0),
+        comments: [],
+        participationError: "내 참여 기록을 확인하지 못했습니다. 투표는 다시 시도할 수 있습니다.",
+      };
+    }
+    return {
+      participation: parseParticipation(participationResult.data),
+      comments: commentResult.error ? [] : parsePublicComments(commentResult.data),
+      participationError: null,
+    };
+  } catch {
+    return {
+      participation: emptyParticipation(0),
+      comments: [],
+      participationError: "내 참여 기록을 확인하지 못했습니다. 투표는 다시 시도할 수 있습니다.",
+    };
+  }
+}
+
+export async function loadRelated(question: Question): Promise<Question[]> {
+  if (!isSupabaseConfigured()) {
+    return relatedQuestions(getSeedQuestions(), question);
+  }
+  try {
+    return relatedQuestions(await loadLiveQuestions(), question);
+  } catch {
+    return [];
   }
 }
 
@@ -238,10 +257,7 @@ export async function loadQuestionMetadata(id: string): Promise<{ title: string;
   }
 
   try {
-    const supabase = createPublicSupabase();
-    const { data, error } = await supabase.rpc("get_published_question", {
-      p_question_id: id,
-    });
+    const { data, error } = await fetchPublishedQuestion(id);
     if (error) {
       return null;
     }

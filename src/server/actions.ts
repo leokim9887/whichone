@@ -37,8 +37,8 @@ type ServerClient = Awaited<ReturnType<typeof createServerSupabase>>;
 
 async function withUser(): Promise<{ supabase: ServerClient; errorCode: string | null }> {
   const supabase = await createServerSupabase();
-  const existing = await supabase.auth.getUser();
-  if (!existing.error && existing.data.user) {
+  const existing = await supabase.auth.getSession();
+  if (!existing.error && existing.data.session?.user) {
     return { supabase, errorCode: null };
   }
 
@@ -51,17 +51,15 @@ async function withUser(): Promise<{ supabase: ServerClient; errorCode: string |
 }
 
 async function readSnapshot(supabase: ServerClient, questionId: string) {
-  const participationResult = await supabase.rpc("get_my_participation", {
-    p_question_id: questionId,
-  });
+  const [participationResult, commentResult] = await Promise.all([
+    supabase.rpc("get_my_participation", { p_question_id: questionId }),
+    supabase.rpc("list_visible_comments", { p_question_id: questionId }),
+  ]);
   if (participationResult.error) {
     return null;
   }
   const participation = parseParticipation(participationResult.data);
-  const commentResult = await supabase.rpc("list_visible_comments", {
-    p_question_id: questionId,
-  });
-  const comments = commentResult.error ? [] : parsePublicComments(commentResult.data);
+  const comments = commentResult.error || !participation.voted ? [] : parsePublicComments(commentResult.data);
   return { participation, comments };
 }
 

@@ -6,7 +6,8 @@ import { Suspense } from "react";
 import { QuestionCard } from "@/components/question-card";
 import { QuestionInteractive } from "@/components/question-interactive";
 import { QuestionSkeleton } from "@/components/skeletons";
-import { loadQuestion, loadQuestionMetadata } from "@/lib/data";
+import { loadQuestion, loadQuestionMetadata, loadRelated } from "@/lib/data";
+import type { DataMode, Question } from "@/lib/types";
 
 export async function generateMetadata({
   params,
@@ -77,16 +78,26 @@ async function QuestionScreen({ params }: { params: Promise<{ id: string }> }) {
         initialComments={data.comments}
         participationError={data.participationError}
       />
-      {data.related.length > 0 ? (
-        <section>
-          <h2 className="text-xl font-bold">같은 주제의 다른 질문</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {data.related.map((question) => (
-              <QuestionCard key={question.id} question={question} mode={data.mode} voted={false} />
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <Suspense fallback={null}>
+        <RelatedSection question={data.question} mode={data.mode} />
+      </Suspense>
     </div>
+  );
+}
+
+async function RelatedSection({ question, mode }: { question: Question; mode: DataMode }) {
+  const related = await loadRelated(question);
+  if (related.length === 0) {
+    return null;
+  }
+  return (
+    <section>
+      <h2 className="text-xl font-bold">같은 주제의 다른 질문</h2>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {related.map((item) => (
+          <QuestionCard key={item.id} question={item} mode={mode} voted={false} />
+        ))}
+      </div>
+    </section>
   );
 }

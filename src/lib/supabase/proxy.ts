@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { isSupabaseConfigured } from "@/lib/env";
 
+const REFRESH_WINDOW_MS = 60_000;
+
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({ request });
   if (!isSupabaseConfigured()) {
@@ -16,6 +18,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   const supabase = createServerClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -31,6 +37,10 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const { data } = await supabase.auth.getSession();
+  const expiresAt = data.session?.expires_at ?? 0;
+  if (!data.session || expiresAt * 1000 - Date.now() < REFRESH_WINDOW_MS) {
+    await supabase.auth.getUser();
+  }
   return response;
 }
