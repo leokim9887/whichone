@@ -43,6 +43,31 @@ export function popularQuestions(questions: readonly Question[], limit = 6): {
   };
 }
 
+export type QuestionSort = "popular" | "latest";
+
+export function sortQuestions(questions: readonly Question[], sort: QuestionSort): {
+  items: Question[];
+  showingRecentBecauseNoVotes: boolean;
+} {
+  const hasVotes = questions.some((question) => question.participantCount > 0);
+  const byLatest = (left: Question, right: Question) => right.publishedAt.localeCompare(left.publishedAt);
+  if (sort === "latest" || !hasVotes) {
+    return {
+      items: [...questions].sort(byLatest),
+      showingRecentBecauseNoVotes: sort === "popular" && !hasVotes && questions.length > 0,
+    };
+  }
+  return {
+    items: [...questions].sort((left, right) => {
+      if (right.participantCount !== left.participantCount) {
+        return right.participantCount - left.participantCount;
+      }
+      return byLatest(left, right);
+    }),
+    showingRecentBecauseNoVotes: false,
+  };
+}
+
 export function latestQuestions(questions: readonly Question[], limit = 6): Question[] {
   return [...questions]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
