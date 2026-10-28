@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageCircle, Pencil, ThumbsUp, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useProfile } from "@/components/profile-provider";
@@ -39,6 +39,7 @@ export function CommentThread({
   onDemoState,
   onComments,
   onOwnRootDeleted,
+  focusCommentId = null,
 }: {
   mode: DataMode;
   questionId: string;
@@ -49,6 +50,7 @@ export function CommentThread({
   onDemoState: (state: DemoState) => void;
   onComments: (update: PublicComment[] | ((current: PublicComment[]) => PublicComment[])) => void;
   onOwnRootDeleted?: () => void;
+  focusCommentId?: string | null;
 }) {
   const [openReplyId, setOpenReplyId] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
@@ -63,6 +65,22 @@ export function CommentThread({
   const replyLock = useRef(false);
   const editLock = useRef(false);
   const deleteLock = useRef(false);
+  const focusedOnce = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!focusCommentId || focusedOnce.current === focusCommentId) {
+      return;
+    }
+    const node = document.getElementById(`comment-${focusCommentId}`);
+    if (!node) {
+      return;
+    }
+    focusedOnce.current = focusCommentId;
+    node.scrollIntoView({ behavior: "smooth", block: "center" });
+    node.classList.add("comment-focus");
+    const timer = window.setTimeout(() => node.classList.remove("comment-focus"), 2400);
+    return () => window.clearTimeout(timer);
+  }, [focusCommentId, comments]);
 
   async function like(commentId: string) {
     if (likesInFlight.current.has(commentId)) {
@@ -259,7 +277,13 @@ export function CommentThread({
   return (
     <ul className="mt-4 space-y-3">
       {comments.map((comment) => (
-        <li key={comment.id} className="rounded-2xl border border-line px-4 py-3">
+        <li
+          key={comment.id}
+          id={`comment-${comment.id}`}
+          className={`scroll-mt-24 rounded-2xl border border-line px-4 py-3 ${
+            focusCommentId === comment.id ? "comment-focus" : ""
+          }`}
+        >
           {editingId === comment.id ? (
             <EditForm
               id={`edit-${comment.id}`}
@@ -348,7 +372,13 @@ export function CommentThread({
           {comment.replies.length > 0 ? (
             <ul className="mt-3 space-y-3 border-l border-line pl-3">
               {comment.replies.map((reply) => (
-                <li key={reply.id} className="rounded-2xl bg-background px-3 py-3">
+                <li
+                  key={reply.id}
+                  id={`comment-${reply.id}`}
+                  className={`scroll-mt-24 rounded-2xl bg-background px-3 py-3 ${
+                    focusCommentId === reply.id ? "comment-focus" : ""
+                  }`}
+                >
                   {editingId === reply.id ? (
                     <EditForm
                       id={`edit-${reply.id}`}

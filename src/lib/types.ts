@@ -37,6 +37,31 @@ export type UserProfile = {
   avatarUrl: string | null;
 };
 
+export type MyQuestionItem = {
+  id: string;
+  title: string;
+  status: string;
+  source: "question" | "suggestion";
+  category: Category;
+  topic: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  participantCount: number;
+  commentCount: number;
+};
+
+export type MyCommentItem = {
+  id: string;
+  questionId: string;
+  questionTitle: string;
+  questionStatus: string;
+  body: string;
+  createdAt: string;
+  isReply: boolean;
+  parentId: string | null;
+  optionId: string;
+};
+
 export type Question = {
   id: string;
   title: string;

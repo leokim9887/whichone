@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, LoaderCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { CommentThread } from "@/components/comment-thread";
@@ -35,6 +36,8 @@ export function QuestionInteractive({
   participationError: string | null;
 }) {
   const demo = useDemoState();
+  const searchParams = useSearchParams();
+  const focusCommentId = searchParams.get("comment");
   const { ensureProfile, openSetup, profile } = useProfile();
   const [liveParticipation, setLiveParticipation] = useState(initialParticipation);
   const [liveComments, setLiveComments] = useState(initialComments);
@@ -47,6 +50,7 @@ export function QuestionInteractive({
   const [commentError, setCommentError] = useState<string | null>(null);
   const [commentSaving, setCommentSaving] = useState(false);
   const [filter, setFilter] = useState("all");
+  const activeFilter = focusCommentId ? "all" : filter;
 
   const demoVote = mode === "demo" ? demo.votes[question.id] : undefined;
   const demoComments = mode === "demo" ? demo.comments[question.id] ?? [] : [];
@@ -74,7 +78,9 @@ export function QuestionInteractive({
     [participation.counts, participation.optionId, participation.voted, question.options],
   );
 
-  const visibleComments = comments.filter((comment) => filter === "all" || comment.optionId === filter);
+  const visibleComments = comments.filter(
+    (comment) => activeFilter === "all" || comment.optionId === activeFilter,
+  );
   const optionText = new Map(question.options.map((option) => [option.id, option.text]));
 
   async function vote() {
@@ -296,14 +302,14 @@ export function QuestionInteractive({
 
           <div>
             <div className="flex gap-2 overflow-x-auto">
-              <FilterChip active={filter === "all"} onClick={() => setFilter("all")} label="전체" />
+              <FilterChip active={activeFilter === "all"} onClick={() => setFilter("all")} label="전체" />
               {question.options
                 .slice()
                 .sort((a, b) => a.position - b.position)
                 .map((option) => (
                   <FilterChip
                     key={option.id}
-                    active={filter === option.id}
+                    active={activeFilter === option.id}
                     onClick={() => setFilter(option.id)}
                     label={option.text}
                   />
@@ -321,6 +327,7 @@ export function QuestionInteractive({
                 demo={demo}
                 onDemoState={writeDemoState}
                 onComments={setLiveComments}
+                focusCommentId={focusCommentId}
                 onOwnRootDeleted={() => {
                   if (mode === "demo") {
                     return;

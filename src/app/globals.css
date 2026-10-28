@@ -103,6 +103,12 @@ textarea {
   background: rgba(28, 25, 23, 0.42);
 }
 
+.comment-focus {
+  box-shadow: 0 0 0 2px var(--accent);
+  background: var(--accent-soft);
+  transition: box-shadow 0.3s ease, background 0.3s ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
   .today-progress {

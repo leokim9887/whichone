@@ -1,5 +1,5 @@
 import { LIMITS } from "@/lib/limits";
-import type { Category, PublicComment, SuggestionDraft } from "@/lib/types";
+import type { Category, MyCommentItem, MyQuestionItem, PublicComment, SuggestionDraft } from "@/lib/types";
 
 export type DemoVote = {
   optionId: string;
@@ -253,6 +253,58 @@ export function toggleDemoLike(state: DemoState, questionId: string, commentId: 
     next.likes[commentId] = true;
   }
   return { ok: true, state: next, value: !liked };
+}
+
+export function demoMyQuestions(state: DemoState): MyQuestionItem[] {
+  return (state.suggestions ?? [])
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((suggestion) => ({
+      id: suggestion.id,
+      title: suggestion.title,
+      status: suggestion.status,
+      source: "suggestion" as const,
+      category: suggestion.category,
+      topic: suggestion.topic,
+      publishedAt: null,
+      createdAt: suggestion.createdAt,
+      participantCount: 0,
+      commentCount: 0,
+    }));
+}
+
+export function demoMyComments(
+  state: DemoState,
+  titles: Map<string, string>,
+): MyCommentItem[] {
+  const roots: MyCommentItem[] = [];
+  for (const [questionId, list] of Object.entries(state.comments ?? {})) {
+    for (const comment of list) {
+      roots.push({
+        id: comment.id,
+        questionId,
+        questionTitle: titles.get(questionId) ?? "질문",
+        questionStatus: "published",
+        body: comment.body,
+        createdAt: comment.createdAt,
+        isReply: false,
+        parentId: null,
+        optionId: comment.optionId,
+      });
+    }
+  }
+  const replies: MyCommentItem[] = (state.replies ?? []).map((reply) => ({
+    id: reply.id,
+    questionId: reply.questionId,
+    questionTitle: titles.get(reply.questionId) ?? "질문",
+    questionStatus: "published",
+    body: reply.body,
+    createdAt: reply.createdAt,
+    isReply: true,
+    parentId: reply.parentId,
+    optionId: reply.optionId,
+  }));
+  return [...roots, ...replies].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export function demoPublicComments(state: DemoState, questionId: string): PublicComment[] {

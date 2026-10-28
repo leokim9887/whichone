@@ -7,6 +7,8 @@ import type {
   OptionCount,
   OwnComment,
   Participation,
+  MyCommentItem,
+  MyQuestionItem,
   PublicComment,
   PublicReply,
   Question,
@@ -197,6 +199,115 @@ function parsePublicReply(item: unknown): PublicReply {
     throw new Error("invalid comment");
   }
   return { id, optionId, body, createdAt, nickname, avatarUrl, likeCount, likedByMe, mine };
+}
+
+export function parseMyQuestionItem(value: unknown): MyQuestionItem {
+  if (!isRecord(value)) {
+    throw new Error("invalid my question");
+  }
+  const id = asString(value.id);
+  const title = asString(value.title);
+  const status = asString(value.status);
+  const source = asString(value.source);
+  const category = asString(value.category);
+  const createdAt = asString(value.createdAt);
+  const participantCount = asNumber(value.participantCount);
+  const commentCount = value.commentCount === undefined ? 0 : asNumber(value.commentCount);
+  const publishedAt =
+    value.publishedAt === null || value.publishedAt === undefined ? null : asString(value.publishedAt);
+  if (
+    !id ||
+    !title ||
+    !status ||
+    (source !== "question" && source !== "suggestion") ||
+    !category ||
+    !isCategory(category) ||
+    !createdAt ||
+    participantCount === null ||
+    commentCount === null ||
+    (publishedAt === null && value.publishedAt)
+  ) {
+    throw new Error("invalid my question");
+  }
+  return {
+    id,
+    title,
+    status,
+    source,
+    category,
+    topic: asTopic(value.topic),
+    publishedAt,
+    createdAt,
+    participantCount,
+    commentCount,
+  };
+}
+
+export function parseMyQuestionsResult(value: unknown): MyQuestionItem[] {
+  if (!isRecord(value)) {
+    throw new Error("invalid my questions");
+  }
+  const result = parseActionResult(value);
+  if (!result.ok) {
+    throw new Error(result.code);
+  }
+  if (!Array.isArray(result.extra.items)) {
+    return [];
+  }
+  return result.extra.items.map(parseMyQuestionItem);
+}
+
+export function parseMyCommentItem(value: unknown): MyCommentItem {
+  if (!isRecord(value)) {
+    throw new Error("invalid my comment");
+  }
+  const id = asString(value.id);
+  const questionId = asString(value.questionId);
+  const questionTitle = asString(value.questionTitle);
+  const questionStatus = asString(value.questionStatus) ?? "published";
+  const body = asString(value.body);
+  const createdAt = asString(value.createdAt);
+  const isReply = asBoolean(value.isReply);
+  const optionId = asString(value.optionId);
+  const parentId =
+    value.parentId === null || value.parentId === undefined ? null : asString(value.parentId);
+  if (
+    !id ||
+    !questionId ||
+    !questionTitle ||
+    !body ||
+    !createdAt ||
+    isReply === null ||
+    !optionId ||
+    (parentId === null && value.parentId)
+  ) {
+    throw new Error("invalid my comment");
+  }
+  return {
+    id,
+    questionId,
+    questionTitle,
+    questionStatus,
+    body,
+    createdAt,
+    isReply,
+    parentId,
+    optionId,
+  };
+}
+
+export function parseMyCommentsResult(value: unknown): MyCommentItem[] {
+  if (!isRecord(value)) {
+    throw new Error("invalid my comments");
+  }
+  const result = parseActionResult(value);
+  if (!result.ok) {
+    throw new Error(result.code);
+  }
+  if (!Array.isArray(result.extra.items)) {
+    return [];
+  }
+  return result.extra.items.map(parseMyCommentItem);
 }
 
 export function parseUserProfile(value: unknown): UserProfile | null {

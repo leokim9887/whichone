@@ -10,6 +10,8 @@ import {
   parseActionResult,
   parseAdminDashboard,
   parseIdList,
+  parseMyCommentsResult,
+  parseMyQuestionsResult,
   parseParticipation,
   parsePublicComments,
   parseQuestionList,
@@ -19,7 +21,14 @@ import {
 import { relatedQuestions } from "@/lib/catalog";
 import { getSeedQuestions } from "@/lib/seed-questions";
 import { createPublicSupabase, createServerSupabase } from "@/lib/supabase/server";
-import type { DataMode, Participation, PublicComment, Question } from "@/lib/types";
+import type {
+  DataMode,
+  MyCommentItem,
+  MyQuestionItem,
+  Participation,
+  PublicComment,
+  Question,
+} from "@/lib/types";
 import { isUuid } from "@/lib/uuid";
 
 export type HomeData = {
@@ -238,6 +247,62 @@ export async function loadAdmin(): Promise<AdminData> {
     return { state: "ready", dashboard: parseAdminDashboard(dashboard.data) };
   } catch {
     return { state: "unavailable" };
+  }
+}
+
+export async function loadMyQuestions(): Promise<{
+  mode: DataMode;
+  items: MyQuestionItem[];
+  error: string | null;
+}> {
+  await connection();
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo", items: [], error: null };
+  }
+  try {
+    const supabase = await createServerSupabase();
+    const existing = await supabase.auth.getSession();
+    if (existing.error || !existing.data.session?.user) {
+      const signedIn = await supabase.auth.signInAnonymously();
+      if (signedIn.error || !signedIn.data.user) {
+        return { mode: "live", items: [], error: null };
+      }
+    }
+    const { data, error } = await supabase.rpc("list_my_questions");
+    if (error) {
+      return { mode: "live", items: [], error: "내 질문을 불러오지 못했습니다." };
+    }
+    return { mode: "live", items: parseMyQuestionsResult(data), error: null };
+  } catch {
+    return { mode: "live", items: [], error: "내 질문을 불러오지 못했습니다." };
+  }
+}
+
+export async function loadMyComments(): Promise<{
+  mode: DataMode;
+  items: MyCommentItem[];
+  error: string | null;
+}> {
+  await connection();
+  if (!isSupabaseConfigured()) {
+    return { mode: "demo", items: [], error: null };
+  }
+  try {
+    const supabase = await createServerSupabase();
+    const existing = await supabase.auth.getSession();
+    if (existing.error || !existing.data.session?.user) {
+      const signedIn = await supabase.auth.signInAnonymously();
+      if (signedIn.error || !signedIn.data.user) {
+        return { mode: "live", items: [], error: null };
+      }
+    }
+    const { data, error } = await supabase.rpc("list_my_comments");
+    if (error) {
+      return { mode: "live", items: [], error: "내가 쓴 댓글을 불러오지 못했습니다." };
+    }
+    return { mode: "live", items: parseMyCommentsResult(data), error: null };
+  } catch {
+    return { mode: "live", items: [], error: "내가 쓴 댓글을 불러오지 못했습니다." };
   }
 }
 
