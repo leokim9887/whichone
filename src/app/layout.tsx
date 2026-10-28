@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 
+import { ProfileProvider } from "@/components/profile-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { siteUrl } from "@/lib/env";
@@ -33,17 +34,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className={`${noto.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <a
-          href="#content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-card focus:px-3 focus:py-2"
-        >
-          본문으로 건너뛰기
-        </a>
-        <SiteHeader />
-        <main id="content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-          {children}
-        </main>
-        <SiteFooter />
+        <ProfileProvider>
+          <a
+            href="#content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-card focus:px-3 focus:py-2"
+          >
+            본문으로 건너뛰기
+          </a>
+          <SiteHeader />
+          <main id="content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+            {children}
+          </main>
+          <SiteFooter />
+        </ProfileProvider>
       </body>
     </html>
   );

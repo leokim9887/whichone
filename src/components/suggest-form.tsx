@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
+import { useProfile } from "@/components/profile-provider";
 import { categoryLabel } from "@/lib/categories";
 import { addDemoSuggestion } from "@/lib/demo-state";
 import { readDemoState, writeDemoState } from "@/lib/demo-storage";
@@ -13,6 +14,7 @@ import { validateSuggestion } from "@/lib/validation";
 import { submitSuggestionAction, type FieldErrors } from "@/server/actions";
 
 export function SuggestForm({ mode }: { mode: DataMode }) {
+  const { ensureProfile, openSetup } = useProfile();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -32,6 +34,11 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
     const validated = validateSuggestion({ title, description, category, topic, options });
     if (!validated.ok) {
       setErrors(validated.errors);
+      return;
+    }
+    const ready = await ensureProfile();
+    if (!ready) {
+      setMessage(messageForCode("profile_required"));
       return;
     }
     setErrors({});
@@ -64,6 +71,9 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
     });
     setPending(false);
     if (!result.ok) {
+      if (result.code === "profile_required") {
+        openSetup();
+      }
       setErrors(result.errors ?? {});
       setMessage(result.message);
       return;

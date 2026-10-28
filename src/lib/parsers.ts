@@ -11,6 +11,7 @@ import type {
   PublicReply,
   Question,
   QuestionStatus,
+  UserProfile,
 } from "@/lib/types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -69,6 +70,21 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     throw new Error("invalid options");
   }
 
+  const authorNickname =
+    value.authorNickname === null || value.authorNickname === undefined
+      ? null
+      : asString(value.authorNickname);
+  const authorAvatarUrl =
+    value.authorAvatarUrl === null || value.authorAvatarUrl === undefined
+      ? null
+      : asString(value.authorAvatarUrl);
+  if (authorNickname === null && value.authorNickname) {
+    throw new Error("invalid question");
+  }
+  if (authorAvatarUrl === null && value.authorAvatarUrl) {
+    throw new Error("invalid question");
+  }
+
   return {
     id,
     title,
@@ -80,6 +96,8 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     dailyFeatureDate,
     participantCount,
     commentCount,
+    authorNickname,
+    authorAvatarUrl,
     options,
   };
 }
@@ -159,13 +177,41 @@ function parsePublicReply(item: unknown): PublicReply {
   const optionId = asString(item.optionId);
   const body = asString(item.body);
   const createdAt = asString(item.createdAt);
+  const nickname = asString(item.nickname) ?? "익명";
+  const avatarUrl =
+    item.avatarUrl === null || item.avatarUrl === undefined ? null : asString(item.avatarUrl);
   const likeCount = item.likeCount === undefined ? 0 : asNumber(item.likeCount);
   const likedByMe = item.likedByMe === undefined ? false : asBoolean(item.likedByMe);
   const mine = item.mine === undefined ? false : asBoolean(item.mine);
-  if (!id || !optionId || !body || !createdAt || likeCount === null || likeCount < 0 || likedByMe === null || mine === null) {
+  if (
+    !id ||
+    !optionId ||
+    !body ||
+    !createdAt ||
+    (avatarUrl === null && item.avatarUrl) ||
+    likeCount === null ||
+    likeCount < 0 ||
+    likedByMe === null ||
+    mine === null
+  ) {
     throw new Error("invalid comment");
   }
-  return { id, optionId, body, createdAt, likeCount, likedByMe, mine };
+  return { id, optionId, body, createdAt, nickname, avatarUrl, likeCount, likedByMe, mine };
+}
+
+export function parseUserProfile(value: unknown): UserProfile | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (!isRecord(value)) {
+    throw new Error("invalid profile");
+  }
+  const nickname = asString(value.nickname);
+  const avatarUrl = asString(value.avatarUrl);
+  if (!nickname || !avatarUrl) {
+    throw new Error("invalid profile");
+  }
+  return { nickname, avatarUrl };
 }
 
 export function parsePublicComments(value: unknown): PublicComment[] {

@@ -38,6 +38,8 @@ function makeQuestion(
     dailyFeatureDate: null,
     participantCount: 0,
     commentCount: 0,
+    authorNickname: null,
+    authorAvatarUrl: null,
     options: makeOptions(optionTexts),
   };
 }

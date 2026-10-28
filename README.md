@@ -35,10 +35,12 @@ npm run dev
 
 1. Supabase에서 새 프로젝트를 만듭니다.
 2. Authentication → Sign In / Providers에서 **Anonymous sign-ins**를 켭니다. 끄면 투표할 때 설정 안내가 나옵니다.
-3. SQL Editor에서 `supabase/migrations/20261023120000_init.sql` 전체를 한 번 실행합니다.
+3. SQL Editor에서 `supabase/migrations/` 안의 `.sql` 파일을 이름 순서대로 실행합니다. 처음이면 `20261023120000_init.sql`부터, 이미 연결한 프로젝트면 아직 안 돌린 파일만 이어서 실행하면 됩니다. 프로필·아바타 기능은 `20261028200000_profiles.sql`이 필요합니다.
 4. 이어서 `supabase/seed.sql` 전체를 한 번에 실행합니다. 질문과 선택지만 들어가고, 가짜 투표는 들어가지 않습니다. 파일 안의 `begin`부터 `commit`까지 한 트랜잭션으로 실행해야 합니다.
 5. `.env.local`에 Project URL과 anon public 키를 넣습니다. Settings → API에서 확인할 수 있습니다.
 6. 개발 서버를 다시 시작합니다. 데모 안내가 사라지고 데이터베이스의 공개 질문이 보입니다.
+
+투표·댓글·답글·질문 제안 전에 고유 닉네임과 프로필 사진(본인 선택)을 설정해야 합니다. 댓글·답글과 승인된 질문에는 닉네임이 표시됩니다.
 
 ### 관리자
 

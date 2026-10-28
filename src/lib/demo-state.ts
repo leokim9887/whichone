@@ -11,6 +11,8 @@ export type DemoComment = {
   optionId: string;
   body: string;
   createdAt: string;
+  nickname: string;
+  avatarUrl: string | null;
 };
 
 export type DemoSuggestion = SuggestionDraft & {
@@ -35,6 +37,8 @@ export type DemoReply = {
   optionId: string;
   body: string;
   createdAt: string;
+  nickname: string;
+  avatarUrl: string | null;
 };
 
 export type DemoState = {
@@ -117,6 +121,7 @@ export function addDemoComment(
   state: DemoState,
   questionId: string,
   body: string,
+  profile: { nickname: string; avatarUrl: string | null },
   now = new Date().toISOString(),
 ): DemoMutation<DemoComment> {
   const vote = state.votes[questionId];
@@ -130,6 +135,8 @@ export function addDemoComment(
     optionId: vote.optionId,
     body,
     createdAt: now,
+    nickname: profile.nickname,
+    avatarUrl: profile.avatarUrl,
   };
   const next = clone(state);
   next.comments[questionId] = [comment, ...existing];
@@ -141,6 +148,7 @@ export function addDemoReply(
   questionId: string,
   parentId: string,
   body: string,
+  profile: { nickname: string; avatarUrl: string | null },
   now = new Date().toISOString(),
 ): DemoMutation<DemoReply> {
   const vote = state.votes[questionId];
@@ -159,6 +167,8 @@ export function addDemoReply(
     optionId: vote.optionId,
     body,
     createdAt: now,
+    nickname: profile.nickname,
+    avatarUrl: profile.avatarUrl,
   };
   const next = clone(state);
   next.replies = [reply, ...next.replies];
@@ -259,6 +269,8 @@ export function demoPublicComments(state: DemoState, questionId: string): Public
       optionId: root.optionId,
       body: root.body,
       createdAt: root.createdAt,
+      nickname: root.nickname || "익명",
+      avatarUrl: root.avatarUrl ?? null,
       likeCount: liked(root.id) ? 1 : 0,
       likedByMe: liked(root.id),
       mine: true,
@@ -271,6 +283,8 @@ export function demoPublicComments(state: DemoState, questionId: string): Public
           optionId: reply.optionId,
           body: reply.body,
           createdAt: reply.createdAt,
+          nickname: reply.nickname || "익명",
+          avatarUrl: reply.avatarUrl ?? null,
           likeCount: liked(reply.id) ? 1 : 0,
           likedByMe: liked(reply.id),
           mine: true,

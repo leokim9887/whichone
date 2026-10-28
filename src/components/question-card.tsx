@@ -20,6 +20,11 @@ export function QuestionCard({
         {categoryTopicLabel(question.category, question.topic)}
       </p>
       <h3 className="mt-2 text-lg font-bold leading-7 text-foreground">{question.title}</h3>
+      {question.authorNickname ? (
+        <p className="mt-2 text-xs text-muted">
+          <span className="font-semibold text-foreground">{question.authorNickname}</span> 님 제안
+        </p>
+      ) : null}
       <div className="mt-5 flex items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {mode === "demo"

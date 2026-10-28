@@ -4,6 +4,8 @@ import { Check, LoaderCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { CommentThread } from "@/components/comment-thread";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { useProfile } from "@/components/profile-provider";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
 import { ShareActions } from "@/components/share-actions";
@@ -13,6 +15,7 @@ import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatParticipantCount } from "@/lib/format";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
+import { readDemoProfile } from "@/lib/profile-storage";
 import { buildSummary } from "@/lib/results";
 import type { DataMode, Participation, PublicComment, Question } from "@/lib/types";
 import { validateComment } from "@/lib/validation";
@@ -32,6 +35,7 @@ export function QuestionInteractive({
   participationError: string | null;
 }) {
   const demo = useDemoState();
+  const { ensureProfile, openSetup, profile } = useProfile();
   const [liveParticipation, setLiveParticipation] = useState(initialParticipation);
   const [liveComments, setLiveComments] = useState(initialComments);
   const [draftOption, setDraftOption] = useState<string | null>(
@@ -77,6 +81,11 @@ export function QuestionInteractive({
     if (!selected || participation.voted || saving) {
       return;
     }
+    const ready = await ensureProfile();
+    if (!ready) {
+      setMessage(messageForCode("profile_required"));
+      return;
+    }
     setSaving(true);
     setMessage(null);
 
@@ -106,6 +115,9 @@ export function QuestionInteractive({
       setLiveComments(result.comments);
     }
     if (!result.ok) {
+      if (result.code === "profile_required") {
+        openSetup();
+      }
       setMessage(result.message);
       return;
     }
@@ -117,11 +129,22 @@ export function QuestionInteractive({
       setCommentError(validated.message);
       return;
     }
+    const ready = await ensureProfile();
+    if (!ready) {
+      setCommentError(messageForCode("profile_required"));
+      return;
+    }
     setCommentSaving(true);
     setCommentError(null);
 
     if (mode === "demo") {
-      const result = addDemoComment(demo, question.id, validated.value.body);
+      const demoProfile = profile ?? readDemoProfile();
+      if (!demoProfile) {
+        setCommentSaving(false);
+        setCommentError(messageForCode("profile_required"));
+        return;
+      }
+      const result = addDemoComment(demo, question.id, validated.value.body, demoProfile);
       setCommentSaving(false);
       if (!result.ok) {
         setCommentError(messageForCode(result.code));
@@ -135,6 +158,9 @@ export function QuestionInteractive({
     const result = await addCommentAction(question.id, validated.value.body);
     setCommentSaving(false);
     if (!result.ok) {
+      if (result.code === "profile_required") {
+        openSetup();
+      }
       setCommentError(result.message);
       return;
     }
@@ -149,6 +175,17 @@ export function QuestionInteractive({
         <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
         <h1 className="mt-2 text-3xl font-bold leading-snug">{question.title}</h1>
         {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
+        {question.authorNickname ? (
+          <div className="mt-3 flex items-center gap-2 text-sm text-muted">
+            <ProfileAvatar
+              profile={{ nickname: question.authorNickname, avatarUrl: question.authorAvatarUrl }}
+              size="sm"
+            />
+            <span>
+              <span className="font-semibold text-foreground">{question.authorNickname}</span> 님이 제안한 질문
+            </span>
+          </div>
+        ) : null}
         <p className="mt-3 text-sm text-muted">
           {mode === "demo"
             ? "공유 참여자 수는 집계하지 않습니다"
@@ -213,8 +250,7 @@ export function QuestionInteractive({
           <div>
             <h2 className="text-lg font-bold">댓글 달기</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다. 댓글과 답글은 여러 번 남길 수 있고, 추천도 할 수
-              있습니다.
+              닉네임과 프로필 사진이 함께 표시됩니다. 최대 {LIMITS.comment}자이며, 댓글·답글은 여러 번 남길 수 있습니다.
             </p>
           </div>
           {participation.comment && participation.comment.status !== "visible" ? (

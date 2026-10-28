@@ -188,25 +188,26 @@ describe("demo votes", () => {
     const wrong = castDemoVote(EMPTY_DEMO_STATE, "q1", "other", ["o1", "o2"]);
     assert.equal(wrong.ok, false);
 
-    const withoutVote = addDemoComment(EMPTY_DEMO_STATE, "q1", "이유");
+    const demoProfile = { nickname: "테스트닉", avatarUrl: "https://example.com/a.png" };
+    const withoutVote = addDemoComment(EMPTY_DEMO_STATE, "q1", "이유", demoProfile);
     assert.equal(withoutVote.ok, false);
-    const withVote = addDemoComment(first.state, "q1", "이유");
+    const withVote = addDemoComment(first.state, "q1", "이유", demoProfile);
     assert.equal(withVote.ok, true);
     if (!withVote.ok) {
       return;
     }
-    const secondComment = addDemoComment(withVote.state, "q1", "한 번 더");
+    const secondComment = addDemoComment(withVote.state, "q1", "한 번 더", demoProfile);
     assert.equal(secondComment.ok, true);
     if (secondComment.ok) {
       assert.equal(secondComment.state.comments.q1?.length, 2);
     }
     const replyBase = secondComment.ok ? secondComment.state : withVote.state;
-    const reply = addDemoReply(replyBase, "q1", withVote.value.id, "그 기준도 중요해요");
+    const reply = addDemoReply(replyBase, "q1", withVote.value.id, "그 기준도 중요해요", demoProfile);
     assert.equal(reply.ok, true);
     if (!reply.ok) {
       return;
     }
-    const secondReply = addDemoReply(reply.state, "q1", withVote.value.id, "한 번 더");
+    const secondReply = addDemoReply(reply.state, "q1", withVote.value.id, "한 번 더", demoProfile);
     assert.equal(secondReply.ok, true);
     if (secondReply.ok) {
       assert.notEqual(secondReply.value.id, reply.value.id);
@@ -271,6 +272,8 @@ describe("comment updates", () => {
       optionId: "o1",
       body: "이유",
       createdAt: "2026-10-26T00:00:00.000Z",
+      nickname: "갑",
+      avatarUrl: null,
       likeCount: 1,
       likedByMe: false,
       mine: false,
@@ -280,6 +283,8 @@ describe("comment updates", () => {
           optionId: "o2",
           body: "답글",
           createdAt: "2026-10-26T01:00:00.000Z",
+          nickname: "을",
+          avatarUrl: null,
           likeCount: 0,
           likedByMe: false,
           mine: true,

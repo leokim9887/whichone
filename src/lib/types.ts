@@ -32,6 +32,11 @@ export type Option = {
   position: number;
 };
 
+export type UserProfile = {
+  nickname: string;
+  avatarUrl: string;
+};
+
 export type Question = {
   id: string;
   title: string;
@@ -43,6 +48,8 @@ export type Question = {
   dailyFeatureDate: string | null;
   participantCount: number;
   commentCount: number;
+  authorNickname: string | null;
+  authorAvatarUrl: string | null;
   options: Option[];
 };
 
@@ -74,6 +81,8 @@ export type CommentBody = {
 };
 
 export type PublicReply = CommentBody & {
+  nickname: string;
+  avatarUrl: string | null;
   likeCount: number;
   likedByMe: boolean;
   mine: boolean;

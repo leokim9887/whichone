@@ -1,8 +1,14 @@
 import { isCategory } from "@/lib/categories";
-import { LIMITS } from "@/lib/limits";
+import { AVATAR_MIME_TYPES, LIMITS, NICKNAME_PATTERN } from "@/lib/limits";
 import { normalizeLine } from "@/lib/text";
 import { topicBelongsTo } from "@/lib/topics";
-import { REPORT_REASONS, type Category, type ReportReason, type SuggestionDraft } from "@/lib/types";
+import {
+  REPORT_REASONS,
+  type Category,
+  type ReportReason,
+  type SuggestionDraft,
+  type UserProfile,
+} from "@/lib/types";
 
 export type FieldErrors = Record<string, string>;
 
@@ -75,6 +81,75 @@ export function validateSuggestion(input: {
       category: input.category as Category,
       topic: input.topic,
       options: filled.map((item) => item.option),
+    },
+  };
+}
+
+export function validateNickname(nickname: string): ValidationResult<{ nickname: string }> {
+  const value = nickname.trim();
+  if (value.length < LIMITS.nicknameMin || value.length > LIMITS.nicknameMax) {
+    return fail(`닉네임은 ${LIMITS.nicknameMin}~${LIMITS.nicknameMax}자로 입력해 주세요.`, {
+      nickname: `닉네임은 ${LIMITS.nicknameMin}~${LIMITS.nicknameMax}자로 입력해 주세요.`,
+    });
+  }
+  if (!NICKNAME_PATTERN.test(value)) {
+    return fail("닉네임은 한글, 영문, 숫자, _ 만 사용할 수 있습니다.", {
+      nickname: "닉네임은 한글, 영문, 숫자, _ 만 사용할 수 있습니다.",
+    });
+  }
+  return { ok: true, value: { nickname: value } };
+}
+
+export function validateAvatarFile(
+  file: File | null,
+  required: boolean,
+): ValidationResult<{ file: File | null }> {
+  if (!file) {
+    if (required) {
+      return fail("프로필 사진을 선택해 주세요.", {
+        avatar: "프로필 사진을 선택해 주세요.",
+      });
+    }
+    return { ok: true, value: { file: null } };
+  }
+  if (!(AVATAR_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return fail("사진은 JPG, PNG, WEBP만 올릴 수 있습니다.", {
+      avatar: "사진은 JPG, PNG, WEBP만 올릴 수 있습니다.",
+    });
+  }
+  if (file.size > LIMITS.avatarBytes) {
+    return fail("프로필 사진은 2MB 이하로 올려 주세요.", {
+      avatar: "프로필 사진은 2MB 이하로 올려 주세요.",
+    });
+  }
+  return { ok: true, value: { file } };
+}
+
+export function validateProfileDraft(input: {
+  nickname: string;
+  avatarFile: File | null;
+  existingAvatarUrl: string | null;
+}): ValidationResult<UserProfile & { avatarFile: File | null }> {
+  const nick = validateNickname(input.nickname);
+  if (!nick.ok) {
+    return nick;
+  }
+  const needsAvatar = !input.existingAvatarUrl;
+  const avatar = validateAvatarFile(input.avatarFile, needsAvatar);
+  if (!avatar.ok) {
+    return avatar;
+  }
+  if (!input.existingAvatarUrl && !avatar.value.file) {
+    return fail("프로필 사진을 선택해 주세요.", {
+      avatar: "프로필 사진을 선택해 주세요.",
+    });
+  }
+  return {
+    ok: true,
+    value: {
+      nickname: nick.value.nickname,
+      avatarUrl: input.existingAvatarUrl ?? "",
+      avatarFile: avatar.value.file,
     },
   };
 }

@@ -3,15 +3,23 @@
 import { isDateKey } from "@/lib/daily";
 import { isSupabaseConfigured } from "@/lib/env";
 import { messageForCode } from "@/lib/messages";
+import { AVATAR_MIME_TYPES, LIMITS } from "@/lib/limits";
 import {
   parseActionResult,
   parseParticipation,
   parsePublicComments,
+  parseUserProfile,
 } from "@/lib/parsers";
 import { createServerSupabase } from "@/lib/supabase/server";
-import type { Participation, PublicComment, QuestionStatus } from "@/lib/types";
+import type { Participation, PublicComment, QuestionStatus, UserProfile } from "@/lib/types";
 import { isUuid } from "@/lib/uuid";
-import { validateComment, validateReport, validateSuggestion } from "@/lib/validation";
+import {
+  validateAvatarFile,
+  validateComment,
+  validateNickname,
+  validateReport,
+  validateSuggestion,
+} from "@/lib/validation";
 
 export type FieldErrors = Record<string, string>;
 
@@ -68,6 +76,108 @@ function failure(
   errors?: FieldErrors,
 ): { ok: false; code: string; message: string; errors?: FieldErrors } {
   return { ok: false, code, message: messageForCode(code), errors };
+}
+
+export async function getMyProfileAction(): Promise<UserProfile | null> {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return null;
+    }
+    const { data, error } = await auth.supabase.rpc("get_my_profile");
+    if (error) {
+      return null;
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return null;
+    }
+    return parseUserProfile(result.extra.profile);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveProfileAction(formData: FormData): Promise<
+  | { ok: true; profile: UserProfile }
+  | { ok: false; code: string; message: string; errors?: FieldErrors }
+> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+
+  const nicknameRaw = String(formData.get("nickname") ?? "");
+  const nick = validateNickname(nicknameRaw);
+  if (!nick.ok) {
+    return { ok: false, code: "invalid", message: nick.message, errors: nick.errors };
+  }
+
+  const avatarEntry = formData.get("avatar");
+  const avatarFile = avatarEntry instanceof File && avatarEntry.size > 0 ? avatarEntry : null;
+  const keepUrl = String(formData.get("keepAvatarUrl") ?? "").trim();
+
+  const avatarCheck = validateAvatarFile(avatarFile, !keepUrl);
+  if (!avatarCheck.ok) {
+    return { ok: false, code: "invalid", message: avatarCheck.message, errors: avatarCheck.errors };
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+
+    const user = (await auth.supabase.auth.getUser()).data.user;
+    if (!user) {
+      return failure("auth_required");
+    }
+
+    let avatarUrl = keepUrl;
+    if (avatarFile) {
+      if (!(AVATAR_MIME_TYPES as readonly string[]).includes(avatarFile.type) || avatarFile.size > LIMITS.avatarBytes) {
+        return failure("invalid", { avatar: "프로필 사진을 다시 선택해 주세요." });
+      }
+      const ext =
+        avatarFile.type === "image/png" ? "png" : avatarFile.type === "image/webp" ? "webp" : "jpg";
+      const path = `${user.id}/avatar.${ext}`;
+      const bytes = new Uint8Array(await avatarFile.arrayBuffer());
+      const uploaded = await auth.supabase.storage.from("avatars").upload(path, bytes, {
+        contentType: avatarFile.type,
+        upsert: true,
+      });
+      if (uploaded.error) {
+        return failure("unavailable");
+      }
+      const publicUrl = auth.supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      avatarUrl = `${publicUrl}?v=${Date.now()}`;
+    }
+
+    if (!avatarUrl) {
+      return failure("invalid", { avatar: "프로필 사진을 선택해 주세요." });
+    }
+
+    const { data, error } = await auth.supabase.rpc("upsert_my_profile", {
+      p_nickname: nick.value.nickname,
+      p_avatar_url: avatarUrl,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    const profile = parseUserProfile(result.extra.profile) ?? {
+      nickname: nick.value.nickname,
+      avatarUrl,
+    };
+    return { ok: true, profile };
+  } catch {
+    return failure("unavailable");
+  }
 }
 
 export async function castVoteAction(questionId: string, optionId: string): Promise<VoteActionResult> {

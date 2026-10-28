@@ -3,6 +3,8 @@
 import { MessageCircle, Pencil, ThumbsUp, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { useProfile } from "@/components/profile-provider";
 import { ReportForm } from "@/components/report-form";
 import { addReplyLive, deleteCommentLive, editCommentLive, toggleLikeLive } from "@/lib/comment-live";
 import {
@@ -23,6 +25,7 @@ import {
 import { formatDateTime } from "@/lib/format";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
+import { readDemoProfile } from "@/lib/profile-storage";
 import type { DataMode, PublicComment, PublicReply } from "@/lib/types";
 import { validateComment } from "@/lib/validation";
 
@@ -55,6 +58,7 @@ export function CommentThread({
   const [editBody, setEditBody] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
+  const { ensureProfile, openSetup, profile } = useProfile();
   const likesInFlight = useRef(new Set<string>());
   const replyLock = useRef(false);
   const editLock = useRef(false);
@@ -95,11 +99,22 @@ export function CommentThread({
     if (replyLock.current) {
       return;
     }
+    const ready = await ensureProfile();
+    if (!ready) {
+      setReplyError(messageForCode("profile_required"));
+      return;
+    }
     replyLock.current = true;
     setReplyError(null);
 
     if (mode === "demo") {
-      const result = addDemoReply(demo, questionId, parentId, validated.value.body);
+      const demoProfile = profile ?? readDemoProfile();
+      if (!demoProfile) {
+        replyLock.current = false;
+        setReplyError(messageForCode("profile_required"));
+        return;
+      }
+      const result = addDemoReply(demo, questionId, parentId, validated.value.body, demoProfile);
       replyLock.current = false;
       if (!result.ok) {
         setReplyError(messageForCode(result.code));
@@ -119,6 +134,8 @@ export function CommentThread({
         optionId: myOptionId || current.find((comment) => comment.id === parentId)?.optionId || "",
         body,
         createdAt: new Date().toISOString(),
+        nickname: profile?.nickname ?? "나",
+        avatarUrl: profile?.avatarUrl ?? null,
         likeCount: 0,
         likedByMe: false,
         mine: true,
@@ -133,6 +150,9 @@ export function CommentThread({
       onComments((current) => removeReply(current, pendingId));
       setReplyBody(body);
       setOpenReplyId(parentId);
+      if (result.code === "profile_required") {
+        openSetup();
+      }
       setReplyError(result.message);
       return;
     }
@@ -298,7 +318,7 @@ export function CommentThread({
               <p className="text-right text-xs text-muted">
                 {replyBody.length}/{LIMITS.comment}
               </p>
-              <p className="text-xs leading-5 text-muted">이름은 표시되지 않습니다. 같은 의견에 답글을 여러 번 남길 수 있습니다.</p>
+              <p className="text-xs leading-5 text-muted">닉네임이 함께 표시됩니다. 같은 의견에 답글을 여러 번 남길 수 있습니다.</p>
               {replyError ? (
                 <p className="text-sm text-danger" role="alert">
                   {replyError}
@@ -433,12 +453,17 @@ function CommentBodyView({
   badge: string | null;
 }) {
   return (
-    <div>
-      <p className="text-xs font-semibold text-muted">
-        {badge ? <span className="mr-2 text-accent">{badge}</span> : null}
-        {optionText.get(item.optionId) ?? "선택"}
-      </p>
-      <p className="mt-2 leading-7">{item.body}</p>
+    <div className="flex gap-3">
+      <ProfileAvatar profile={{ nickname: item.nickname, avatarUrl: item.avatarUrl }} size="sm" />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-muted">
+          <span className="text-foreground">{item.nickname}</span>
+          <span className="mx-1.5 text-line">·</span>
+          {badge ? <span className="mr-2 text-accent">{badge}</span> : null}
+          {optionText.get(item.optionId) ?? "선택"}
+        </p>
+        <p className="mt-1.5 leading-7">{item.body}</p>
+      </div>
     </div>
   );
 }

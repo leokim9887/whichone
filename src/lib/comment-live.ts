@@ -11,7 +11,9 @@ import {
   toggleCommentLikeAction,
 } from "@/server/actions";
 
-type LiveResult = { ok: true; comments: PublicComment[] | null } | { ok: false; message: string };
+type LiveResult =
+  | { ok: true; comments: PublicComment[] | null }
+  | { ok: false; code: string; message: string };
 type SimpleResult = { ok: true } | { ok: false; message: string };
 
 async function listComments(questionId: string, supabase: NonNullable<Awaited<ReturnType<typeof authedBrowser>>>): Promise<PublicComment[] | null> {
@@ -64,7 +66,7 @@ export async function addReplyLive(questionId: string, parentId: string, body: s
   if (!supabase) {
     const fallback = await addReplyAction(questionId, parentId, body);
     if (!fallback.ok) {
-      return { ok: false, message: fallback.message };
+      return { ok: false, code: fallback.code, message: fallback.message };
     }
     return { ok: true, comments: fallback.comments };
   }
@@ -75,11 +77,11 @@ export async function addReplyLive(questionId: string, parentId: string, body: s
     p_body: body,
   });
   if (error) {
-    return { ok: false, message: messageForCode("unavailable") };
+    return { ok: false, code: "unavailable", message: messageForCode("unavailable") };
   }
   const result = parseActionResult(data);
   if (!result.ok) {
-    return { ok: false, message: messageForCode(result.code) };
+    return { ok: false, code: result.code, message: messageForCode(result.code) };
   }
 
   return { ok: true, comments: await listComments(questionId, supabase) };
@@ -112,7 +114,7 @@ export async function deleteCommentLive(questionId: string, commentId: string): 
   if (!supabase) {
     const fallback = await deleteCommentAction(questionId, commentId);
     if (!fallback.ok) {
-      return { ok: false, message: fallback.message };
+      return { ok: false, code: fallback.code, message: fallback.message };
     }
     return { ok: true, comments: fallback.comments };
   }
@@ -122,11 +124,11 @@ export async function deleteCommentLive(questionId: string, commentId: string): 
     p_comment_id: commentId,
   });
   if (error) {
-    return { ok: false, message: messageForCode("unavailable") };
+    return { ok: false, code: "unavailable", message: messageForCode("unavailable") };
   }
   const result = parseActionResult(data);
   if (!result.ok) {
-    return { ok: false, message: messageForCode(result.code) };
+    return { ok: false, code: result.code, message: messageForCode(result.code) };
   }
   return { ok: true, comments: await listComments(questionId, supabase) };
 }
