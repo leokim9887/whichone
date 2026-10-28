@@ -2,6 +2,14 @@ export function formatParticipantCount(count: number): string {
   return `참여 ${new Intl.NumberFormat("ko-KR").format(count)}명`;
 }
 
+export function formatCommentCount(count: number): string {
+  return `댓글 ${new Intl.NumberFormat("ko-KR").format(count)}`;
+}
+
+export function formatQuestionStats(participantCount: number, commentCount: number): string {
+  return `${formatParticipantCount(participantCount)} · ${formatCommentCount(commentCount)}`;
+}
+
 export function formatVoteCount(count: number): string {
   return `${new Intl.NumberFormat("ko-KR").format(count)}표`;
 }

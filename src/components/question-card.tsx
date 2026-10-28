@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { VoteHint } from "@/components/vote-hint";
 import { categoryTopicLabel } from "@/lib/topics";
-import { formatParticipantCount } from "@/lib/format";
+import { formatQuestionStats } from "@/lib/format";
 import type { DataMode, Question } from "@/lib/types";
 
 export function QuestionCard({
@@ -22,7 +22,9 @@ export function QuestionCard({
       <h3 className="mt-2 text-lg font-bold leading-7 text-foreground">{question.title}</h3>
       <div className="mt-5 flex items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          {mode === "demo" ? "데모 · 공유 집계 전" : formatParticipantCount(question.participantCount)}
+          {mode === "demo"
+            ? "데모 · 공유 집계 전"
+            : formatQuestionStats(question.participantCount, question.commentCount)}
         </p>
         <Link
           href={`/questions/${question.id}`}

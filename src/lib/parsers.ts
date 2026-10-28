@@ -47,6 +47,7 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
   const publishedAt = asString(value.publishedAt);
   const createdAt = asString(value.createdAt) ?? publishedAt;
   const participantCount = asNumber(value.participantCount);
+  const commentCount = value.commentCount === undefined ? 0 : asNumber(value.commentCount);
   const description = value.description === null ? null : asString(value.description);
   const dailyFeatureDate =
     value.dailyFeatureDate === null || value.dailyFeatureDate === undefined
@@ -56,7 +57,7 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
   if (!id || !title || !category || !isCategory(category) || !publishedAt || !createdAt) {
     throw new Error("invalid question");
   }
-  if (participantCount === null || description === null && value.description !== null) {
+  if (participantCount === null || commentCount === null || commentCount < 0 || description === null && value.description !== null) {
     throw new Error("invalid question");
   }
   if (dailyFeatureDate === null && value.dailyFeatureDate) {
@@ -78,6 +79,7 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     createdAt,
     dailyFeatureDate,
     participantCount,
+    commentCount,
     options,
   };
 }

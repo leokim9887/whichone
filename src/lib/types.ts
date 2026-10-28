@@ -42,6 +42,7 @@ export type Question = {
   createdAt: string;
   dailyFeatureDate: string | null;
   participantCount: number;
+  commentCount: number;
   options: Option[];
 };
 

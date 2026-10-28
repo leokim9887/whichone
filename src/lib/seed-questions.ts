@@ -37,6 +37,7 @@ function makeQuestion(
     createdAt: publishedAt,
     dailyFeatureDate: null,
     participantCount: 0,
+    commentCount: 0,
     options: makeOptions(optionTexts),
   };
 }
