@@ -24,6 +24,7 @@ type ProfileContextValue = {
   openSetup: () => void;
   ensureProfile: () => Promise<boolean>;
   setProfile: (profile: UserProfile) => void;
+  clearProfile: () => void;
 };
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
@@ -88,6 +89,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     [mode, resolveWaiters],
   );
 
+  const clearProfile = useCallback(() => {
+    if (mode === "live") {
+      setLiveProfile(null);
+    }
+    setOpen(false);
+    resolveWaiters(false);
+  }, [mode, resolveWaiters]);
+
   const close = useCallback(() => {
     setOpen(false);
     resolveWaiters(false);
@@ -101,8 +110,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       openSetup,
       ensureProfile,
       setProfile,
+      clearProfile,
     }),
-    [ensureProfile, loading, mode, openSetup, profile, setProfile],
+    [clearProfile, ensureProfile, loading, mode, openSetup, profile, setProfile],
   );
 
   return (
@@ -115,6 +125,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           initial={profile}
           onClose={close}
           onSaved={setProfile}
+          onDeleted={clearProfile}
         />
       ) : null}
     </ProfileContext.Provider>

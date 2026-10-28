@@ -116,6 +116,23 @@ export function writeDemoProfile(profile: UserProfile): void {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
+export function clearDemoProfile(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const previous = readDemoProfile();
+  if (previous?.nickname) {
+    const nicknames = readDemoNicknames().filter(
+      (item) => item.trim().toLowerCase() !== previous.nickname.trim().toLowerCase(),
+    );
+    window.localStorage.setItem(DEMO_NICKNAMES_KEY, JSON.stringify(nicknames));
+  }
+  window.localStorage.removeItem(PROFILE_STORAGE_KEY);
+  cachedRaw = null;
+  cachedProfile = null;
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
 export function suggestNickname(): string {
   const n = Math.floor(1000 + Math.random() * 9000);
   return `어느분${n}`;

@@ -7,13 +7,18 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
 import {
+  clearDemoProfile,
   isDemoNicknameTaken,
   suggestNickname,
   writeDemoProfile,
 } from "@/lib/profile-storage";
 import type { DataMode, UserProfile } from "@/lib/types";
 import { clampNicknameInput, validateAvatarFile, validateNickname } from "@/lib/validation";
-import { checkNicknameAvailableAction, saveProfileAction } from "@/server/actions";
+import {
+  checkNicknameAvailableAction,
+  deleteProfileAction,
+  saveProfileAction,
+} from "@/server/actions";
 
 async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,11 +34,13 @@ export function ProfileSetupModal({
   initial,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   mode: DataMode;
   initial: UserProfile | null;
   onClose: () => void;
   onSaved: (profile: UserProfile) => void;
+  onDeleted: () => void;
 }) {
   const titleId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -47,6 +54,7 @@ export function ProfileSetupModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [checkingNick, setCheckingNick] = useState(false);
 
   useEffect(() => {
@@ -196,6 +204,35 @@ export function ProfileSetupModal({
     }
   }
 
+  async function removeProfile() {
+    if (!initial) {
+      return;
+    }
+    const confirmed = window.confirm(
+      "프로필을 삭제할까요? 닉네임과 사진이 지워지며, 다시 설정하기 전에는 투표·댓글·질문 제안을 할 수 없습니다.",
+    );
+    if (!confirmed) {
+      return;
+    }
+    setMessage(null);
+    setDeleting(true);
+
+    if (mode === "demo") {
+      clearDemoProfile();
+      setDeleting(false);
+      onDeleted();
+      return;
+    }
+
+    const result = await deleteProfileAction();
+    setDeleting(false);
+    if (!result.ok) {
+      setMessage(result.message || messageForCode(result.code));
+      return;
+    }
+    onDeleted();
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-4 sm:items-center" role="presentation">
       <div
@@ -320,22 +357,37 @@ export function ProfileSetupModal({
             </p>
           ) : null}
 
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-muted"
-            >
-              나중에
-            </button>
-            <button
-              type="submit"
-              disabled={pending || checkingNick || Boolean(errors.nickname)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-              {pending ? "저장 중" : "저장하고 시작"}
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            {initial ? (
+              <button
+                type="button"
+                onClick={() => void removeProfile()}
+                disabled={pending || deleting}
+                className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-danger disabled:opacity-60"
+              >
+                {deleting ? "삭제 중" : "프로필 삭제"}
+              </button>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={deleting}
+                className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-muted disabled:opacity-60"
+              >
+                나중에
+              </button>
+              <button
+                type="submit"
+                disabled={pending || deleting || checkingNick || Boolean(errors.nickname)}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                {pending ? "저장 중" : initial ? "저장" : "저장하고 시작"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
