@@ -142,6 +142,57 @@ export function addDemoReply(
   return { ok: true, state: next, value: reply };
 }
 
+export function editDemoPost(
+  state: DemoState,
+  questionId: string,
+  commentId: string,
+  body: string,
+): DemoMutation<string> {
+  const next = clone(state);
+  const root = next.comments[questionId];
+  if (root?.id === commentId) {
+    next.comments[questionId] = { ...root, body };
+    return { ok: true, state: next, value: body };
+  }
+  const index = next.replies.findIndex((reply) => reply.id === commentId && reply.questionId === questionId);
+  if (index < 0) {
+    return { ok: false, code: "not_found" };
+  }
+  const current = next.replies[index];
+  if (!current) {
+    return { ok: false, code: "not_found" };
+  }
+  next.replies[index] = { ...current, body };
+  return { ok: true, state: next, value: body };
+}
+
+export function deleteDemoPost(state: DemoState, questionId: string, commentId: string): DemoMutation<null> {
+  const next = clone(state);
+  const root = next.comments[questionId];
+  if (root?.id === commentId) {
+    const removed = new Set<string>([commentId]);
+    for (const reply of next.replies) {
+      if (reply.parentId === commentId) {
+        removed.add(reply.id);
+      }
+    }
+    delete next.comments[questionId];
+    next.replies = next.replies.filter((reply) => reply.parentId !== commentId);
+    for (const id of removed) {
+      delete next.likes[id];
+    }
+    return { ok: true, state: next, value: null };
+  }
+
+  const reply = next.replies.find((item) => item.id === commentId && item.questionId === questionId);
+  if (!reply) {
+    return { ok: false, code: "not_found" };
+  }
+  next.replies = next.replies.filter((item) => item.id !== commentId);
+  delete next.likes[commentId];
+  return { ok: true, state: next, value: null };
+}
+
 export function toggleDemoLike(state: DemoState, questionId: string, commentId: string): DemoMutation<boolean> {
   const vote = state.votes[questionId];
   if (!vote) {

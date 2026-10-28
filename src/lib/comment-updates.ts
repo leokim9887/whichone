@@ -22,6 +22,31 @@ export function insertReply(comments: readonly PublicComment[], parentId: string
   );
 }
 
+export function replaceCommentBody(
+  comments: readonly PublicComment[],
+  commentId: string,
+  body: string,
+): PublicComment[] {
+  return comments.map((comment) => {
+    if (comment.id === commentId) {
+      return { ...comment, body };
+    }
+    return {
+      ...comment,
+      replies: comment.replies.map((reply) => (reply.id === commentId ? { ...reply, body } : reply)),
+    };
+  });
+}
+
+export function removeOwnPost(comments: readonly PublicComment[], commentId: string): PublicComment[] {
+  return comments
+    .filter((comment) => comment.id !== commentId)
+    .map((comment) => ({
+      ...comment,
+      replies: comment.replies.filter((reply) => reply.id !== commentId),
+    }));
+}
+
 export function removeReply(comments: readonly PublicComment[], replyId: string): PublicComment[] {
   return comments.map((comment) => ({
     ...comment,

@@ -1,12 +1,25 @@
 "use client";
 
-import { MessageCircle, ThumbsUp } from "lucide-react";
+import { MessageCircle, Pencil, ThumbsUp, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { ReportForm } from "@/components/report-form";
-import { addReplyLive, toggleLikeLive } from "@/lib/comment-live";
-import { adoptServerComments, insertReply, removeReply, toggleLocalLike } from "@/lib/comment-updates";
-import { addDemoReply, toggleDemoLike, type DemoState } from "@/lib/demo-state";
+import { addReplyLive, deleteCommentLive, editCommentLive, toggleLikeLive } from "@/lib/comment-live";
+import {
+  adoptServerComments,
+  insertReply,
+  removeOwnPost,
+  removeReply,
+  replaceCommentBody,
+  toggleLocalLike,
+} from "@/lib/comment-updates";
+import {
+  addDemoReply,
+  deleteDemoPost,
+  editDemoPost,
+  toggleDemoLike,
+  type DemoState,
+} from "@/lib/demo-state";
 import { formatDateTime } from "@/lib/format";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
@@ -22,6 +35,7 @@ export function CommentThread({
   demo,
   onDemoState,
   onComments,
+  onOwnRootDeleted,
 }: {
   mode: DataMode;
   questionId: string;
@@ -31,13 +45,20 @@ export function CommentThread({
   demo: DemoState;
   onDemoState: (state: DemoState) => void;
   onComments: (update: PublicComment[] | ((current: PublicComment[]) => PublicComment[])) => void;
+  onOwnRootDeleted?: () => void;
 }) {
   const [openReplyId, setOpenReplyId] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [replyError, setReplyError] = useState<string | null>(null);
   const [likeError, setLikeError] = useState<{ id: string; message: string } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
   const likesInFlight = useRef(new Set<string>());
   const replyLock = useRef(false);
+  const editLock = useRef(false);
+  const deleteLock = useRef(false);
 
   async function like(commentId: string) {
     if (likesInFlight.current.has(commentId)) {
@@ -120,11 +141,120 @@ export function CommentThread({
     }
   }
 
+  function beginEdit(item: PublicReply) {
+    setEditingId(item.id);
+    setEditBody(item.body);
+    setEditError(null);
+    setActionError(null);
+    setOpenReplyId(null);
+  }
+
+  async function saveEdit(commentId: string) {
+    const validated = validateComment(editBody);
+    if (!validated.ok) {
+      setEditError(validated.message);
+      return;
+    }
+    if (editLock.current) {
+      return;
+    }
+    editLock.current = true;
+    setEditError(null);
+    const previous = comments.flatMap((comment) => [comment, ...comment.replies]).find((item) => item.id === commentId);
+    const nextBody = validated.value.body;
+
+    if (mode === "demo") {
+      const result = editDemoPost(demo, questionId, commentId, nextBody);
+      editLock.current = false;
+      if (!result.ok) {
+        setEditError(messageForCode(result.code));
+        return;
+      }
+      onDemoState(result.state);
+      setEditingId(null);
+      return;
+    }
+
+    onComments((current) => replaceCommentBody(current, commentId, nextBody));
+    setEditingId(null);
+    const result = await editCommentLive(questionId, commentId, nextBody);
+    editLock.current = false;
+    if (!result.ok) {
+      if (previous) {
+        onComments((current) => replaceCommentBody(current, commentId, previous.body));
+      }
+      setEditingId(commentId);
+      setEditBody(nextBody);
+      setEditError(result.message);
+    }
+  }
+
+  async function removePost(item: PublicReply, isRoot: boolean) {
+    if (deleteLock.current || item.id.startsWith("pending-")) {
+      return;
+    }
+    const confirmed = window.confirm(isRoot ? "이 의견과 아래 답글을 삭제할까요?" : "이 답글을 삭제할까요?");
+    if (!confirmed) {
+      return;
+    }
+
+    deleteLock.current = true;
+    setActionError(null);
+    setEditingId(null);
+    if (openReplyId === item.id) {
+      setOpenReplyId(null);
+    }
+
+    if (mode === "demo") {
+      const result = deleteDemoPost(demo, questionId, item.id);
+      deleteLock.current = false;
+      if (!result.ok) {
+        setActionError({ id: item.id, message: messageForCode(result.code) });
+        return;
+      }
+      onDemoState(result.state);
+      if (isRoot) {
+        onOwnRootDeleted?.();
+      }
+      return;
+    }
+
+    const snapshot = comments;
+    onComments((current) => removeOwnPost(current, item.id));
+    if (isRoot) {
+      onOwnRootDeleted?.();
+    }
+    const result = await deleteCommentLive(questionId, item.id);
+    deleteLock.current = false;
+    if (!result.ok) {
+      onComments(snapshot);
+      setActionError({ id: item.id, message: result.message });
+      return;
+    }
+    if (result.comments) {
+      onComments((current) => adoptServerComments(current, result.comments ?? []));
+    }
+  }
+
   return (
     <ul className="mt-4 space-y-3">
       {comments.map((comment) => (
         <li key={comment.id} className="rounded-2xl border border-line px-4 py-3">
-          <CommentBodyView item={comment} optionText={optionText} badge={comment.mine ? "내 의견" : null} />
+          {editingId === comment.id ? (
+            <EditForm
+              id={`edit-${comment.id}`}
+              body={editBody}
+              error={editError}
+              onBodyChange={setEditBody}
+              onCancel={() => {
+                setEditingId(null);
+                setEditError(null);
+              }}
+              onSave={() => void saveEdit(comment.id)}
+            />
+          ) : (
+            <CommentBodyView item={comment} optionText={optionText} badge={comment.mine ? "내 의견" : null} />
+          )}
           <CommentActions
             item={comment}
             canReply
@@ -132,13 +262,18 @@ export function CommentThread({
             demo={demo}
             onDemoState={onDemoState}
             likeError={likeError?.id === comment.id ? likeError.message : null}
+            actionError={actionError?.id === comment.id ? actionError.message : null}
             replyOpen={openReplyId === comment.id}
+            editing={editingId === comment.id}
             onLike={() => void like(comment.id)}
             onToggleReply={() => {
               setReplyError(null);
               setReplyBody("");
+              setEditingId(null);
               setOpenReplyId((current) => (current === comment.id ? null : comment.id));
             }}
+            onEdit={() => beginEdit(comment)}
+            onDelete={() => void removePost(comment, true)}
           />
           {openReplyId === comment.id ? (
             <form
@@ -194,7 +329,21 @@ export function CommentThread({
             <ul className="mt-3 space-y-3 border-l border-line pl-3">
               {comment.replies.map((reply) => (
                 <li key={reply.id} className="rounded-2xl bg-background px-3 py-3">
-                  <CommentBodyView item={reply} optionText={optionText} badge={reply.mine ? "내 답글" : "답글"} />
+                  {editingId === reply.id ? (
+                    <EditForm
+                      id={`edit-${reply.id}`}
+                      body={editBody}
+                      error={editError}
+                      onBodyChange={setEditBody}
+                      onCancel={() => {
+                        setEditingId(null);
+                        setEditError(null);
+                      }}
+                      onSave={() => void saveEdit(reply.id)}
+                    />
+                  ) : (
+                    <CommentBodyView item={reply} optionText={optionText} badge={reply.mine ? "내 답글" : "답글"} />
+                  )}
                   <CommentActions
                     item={reply}
                     canReply={false}
@@ -202,9 +351,13 @@ export function CommentThread({
                     demo={demo}
                     onDemoState={onDemoState}
                     likeError={likeError?.id === reply.id ? likeError.message : null}
+                    actionError={actionError?.id === reply.id ? actionError.message : null}
                     replyOpen={false}
+                    editing={editingId === reply.id}
                     onLike={() => void like(reply.id)}
                     onToggleReply={() => undefined}
+                    onEdit={() => beginEdit(reply)}
+                    onDelete={() => void removePost(reply, false)}
                   />
                 </li>
               ))}
@@ -213,6 +366,60 @@ export function CommentThread({
         </li>
       ))}
     </ul>
+  );
+}
+
+function EditForm({
+  id,
+  body,
+  error,
+  onBodyChange,
+  onCancel,
+  onSave,
+}: {
+  id: string;
+  body: string;
+  error: string | null;
+  onBodyChange: (value: string) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <form
+      className="space-y-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave();
+      }}
+    >
+      <label className="block text-sm font-semibold" htmlFor={id}>
+        내용 수정
+        <textarea
+          id={id}
+          value={body}
+          onChange={(event) => onBodyChange(event.target.value)}
+          maxLength={LIMITS.comment}
+          rows={3}
+          className="mt-2 w-full rounded-2xl border border-line bg-background px-3 py-3 font-normal"
+        />
+      </label>
+      <p className="text-right text-xs text-muted">
+        {body.length}/{LIMITS.comment}
+      </p>
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onCancel} className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-muted">
+          취소
+        </button>
+        <button type="submit" className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-card">
+          저장
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -243,9 +450,13 @@ function CommentActions({
   demo,
   onDemoState,
   likeError,
+  actionError,
   replyOpen,
+  editing,
   onLike,
   onToggleReply,
+  onEdit,
+  onDelete,
 }: {
   item: PublicReply;
   canReply: boolean;
@@ -253,11 +464,16 @@ function CommentActions({
   demo: DemoState;
   onDemoState: (state: DemoState) => void;
   likeError: string | null;
+  actionError: string | null;
   replyOpen: boolean;
+  editing: boolean;
   onLike: () => void;
   onToggleReply: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const likeLabel = item.likeCount > 0 ? `추천 ${item.likeCount}` : "추천";
+  const pending = item.id.startsWith("pending-");
   return (
     <div className="mt-3">
       <div className="flex flex-wrap items-center gap-1">
@@ -267,7 +483,7 @@ function CommentActions({
         <button
           type="button"
           onClick={onLike}
-          disabled={item.id.startsWith("pending-")}
+          disabled={pending}
           aria-pressed={item.likedByMe}
           aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
           className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold disabled:opacity-50 ${
@@ -290,13 +506,41 @@ function CommentActions({
             답글
           </button>
         ) : null}
-        {item.id.startsWith("pending-") ? null : (
+        {item.mine && !pending ? (
+          <>
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-pressed={editing}
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold ${
+                editing ? "bg-foreground text-card" : "text-muted"
+              }`}
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-danger"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              삭제
+            </button>
+          </>
+        ) : null}
+        {pending ? null : (
           <ReportForm mode={mode} targetType="comment" targetId={item.id} demoState={demo} onDemoState={onDemoState} />
         )}
       </div>
       {likeError ? (
         <p className="mt-1 text-sm text-danger" role="alert">
           {likeError}
+        </p>
+      ) : null}
+      {actionError ? (
+        <p className="mt-1 text-sm text-danger" role="alert">
+          {actionError}
         </p>
       ) : null}
     </div>

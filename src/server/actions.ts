@@ -197,6 +197,86 @@ export async function addReplyAction(
   }
 }
 
+export async function editCommentAction(
+  questionId: string,
+  commentId: string,
+  body: string,
+): Promise<{ ok: true } | { ok: false; code: string; message: string; errors?: FieldErrors }> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  const validated = validateComment(body);
+  if (!validated.ok) {
+    return { ok: false, code: "invalid", message: validated.message, errors: validated.errors };
+  }
+  if (!isUuid(questionId) || !isUuid(commentId)) {
+    return { ok: false, code: "invalid", message: messageForCode("invalid") };
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("edit_own_comment", {
+      p_question_id: questionId,
+      p_comment_id: commentId,
+      p_body: validated.value.body,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    return { ok: true };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
+export async function deleteCommentAction(
+  questionId: string,
+  commentId: string,
+): Promise<{ ok: true; comments: PublicComment[] | null } | { ok: false; code: string; message: string }> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  if (!isUuid(questionId) || !isUuid(commentId)) {
+    return { ok: false, code: "invalid", message: messageForCode("invalid") };
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("delete_own_comment", {
+      p_question_id: questionId,
+      p_comment_id: commentId,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    const listed = await auth.supabase.rpc("list_visible_comments", { p_question_id: questionId });
+    if (listed.error) {
+      return { ok: true, comments: null };
+    }
+    try {
+      return { ok: true, comments: parsePublicComments(listed.data) };
+    } catch {
+      return { ok: true, comments: null };
+    }
+  } catch {
+    return failure("unavailable");
+  }
+}
+
 export async function toggleCommentLikeAction(
   questionId: string,
   commentId: string,

@@ -13,9 +13,6 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav className="flex items-center gap-2 text-sm font-semibold">
-          <Link href="/" className="inline-flex min-h-11 items-center rounded-2xl px-3 text-muted hover:text-foreground">
-            둘러보기
-          </Link>
           <Link
             href="/suggest"
             className="inline-flex min-h-11 items-center rounded-2xl bg-accent px-3 text-white hover:bg-accent-strong"

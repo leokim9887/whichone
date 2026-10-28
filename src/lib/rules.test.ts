@@ -1,10 +1,25 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { adoptServerComments, insertReply, removeReply, toggleLocalLike } from "./comment-updates.ts";
+import {
+  adoptServerComments,
+  insertReply,
+  removeOwnPost,
+  removeReply,
+  replaceCommentBody,
+  toggleLocalLike,
+} from "./comment-updates.ts";
 import { filterQuestions, popularQuestions } from "./catalog.ts";
 import { hashString, isDateKey, koreaDateKey, pickDailyQuestion, pickDailyQuestions } from "./daily.ts";
-import { addDemoComment, addDemoReply, castDemoVote, EMPTY_DEMO_STATE, toggleDemoLike } from "./demo-state.ts";
+import {
+  addDemoComment,
+  addDemoReply,
+  castDemoVote,
+  deleteDemoPost,
+  editDemoPost,
+  EMPTY_DEMO_STATE,
+  toggleDemoLike,
+} from "./demo-state.ts";
 import { parsePublicComments } from "./parsers.ts";
 import { toPercentages } from "./percentages.ts";
 import { buildSummary } from "./results.ts";
@@ -195,6 +210,17 @@ describe("demo votes", () => {
     if (ownLike.ok) {
       assert.equal(ownLike.state.likes[withVote.value.id], true);
     }
+    const edited = editDemoPost(reply.state, "q1", reply.value.id, "고친 답글");
+    assert.equal(edited.ok, true);
+    if (edited.ok) {
+      assert.equal(edited.state.replies[0]?.body, "고친 답글");
+    }
+    const deleted = deleteDemoPost(edited.ok ? edited.state : reply.state, "q1", withVote.value.id);
+    assert.equal(deleted.ok, true);
+    if (deleted.ok) {
+      assert.equal(deleted.state.comments.q1, undefined);
+      assert.equal(deleted.state.replies.length, 0);
+    }
   });
 });
 
@@ -265,6 +291,13 @@ describe("comment updates", () => {
     assert.equal(own[0]?.replies[0]?.likeCount, 1);
     const undone = toggleLocalLike(liked, "c1");
     assert.equal(undone[0]?.likeCount, 1);
+  });
+
+  it("edits and removes a comment locally", () => {
+    const edited = replaceCommentBody(thread, "r1", "고친 답글");
+    assert.equal(edited[0]?.replies[0]?.body, "고친 답글");
+    const removed = removeOwnPost(edited, "c1");
+    assert.equal(removed.length, 0);
   });
 
   it("shows a reply at once and keeps the new recommendation when the server list arrives", () => {

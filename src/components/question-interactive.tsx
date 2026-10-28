@@ -293,6 +293,12 @@ export function QuestionInteractive({
                 demo={demo}
                 onDemoState={writeDemoState}
                 onComments={setLiveComments}
+                onOwnRootDeleted={() => {
+                  if (mode === "demo") {
+                    return;
+                  }
+                  setLiveParticipation((current) => ({ ...current, comment: null }));
+                }}
               />
             )}
           </div>
