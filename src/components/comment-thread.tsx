@@ -474,10 +474,12 @@ function CommentActions({
 }) {
   const likeLabel = item.likeCount > 0 ? `추천 ${item.likeCount}` : "추천";
   const pending = item.id.startsWith("pending-");
+  const actionClass =
+    "inline-flex min-h-8 items-center gap-1 rounded-full px-2 text-xs font-semibold disabled:opacity-50";
   return (
-    <div className="mt-3">
-      <div className="flex flex-wrap items-center gap-1">
-        <time className="mr-auto text-xs text-muted" dateTime={item.createdAt}>
+    <div className="mt-2">
+      <div className="flex flex-wrap items-center gap-0.5">
+        <time className="mr-auto text-[11px] text-muted" dateTime={item.createdAt}>
           {formatDateTime(item.createdAt)}
         </time>
         <button
@@ -486,11 +488,9 @@ function CommentActions({
           disabled={pending}
           aria-pressed={item.likedByMe}
           aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
-          className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold disabled:opacity-50 ${
-            item.likedByMe ? "bg-accent-soft text-accent-strong" : "text-muted"
-          }`}
+          className={`${actionClass} ${item.likedByMe ? "bg-accent-soft text-accent-strong" : "text-muted"}`}
         >
-          <ThumbsUp className={`h-4 w-4 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
+          <ThumbsUp className={`h-3.5 w-3.5 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
           {likeLabel}
         </button>
         {canReply ? (
@@ -498,11 +498,9 @@ function CommentActions({
             type="button"
             onClick={onToggleReply}
             aria-expanded={replyOpen}
-            className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold ${
-              replyOpen ? "bg-foreground text-card" : "text-muted"
-            }`}
+            className={`${actionClass} ${replyOpen ? "bg-foreground text-card" : "text-muted"}`}
           >
-            <MessageCircle className="h-4 w-4" aria-hidden="true" />
+            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
             답글
           </button>
         ) : null}
@@ -512,25 +510,26 @@ function CommentActions({
               type="button"
               onClick={onEdit}
               aria-pressed={editing}
-              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold ${
-                editing ? "bg-foreground text-card" : "text-muted"
-              }`}
+              className={`${actionClass} ${editing ? "bg-foreground text-card" : "text-muted"}`}
             >
-              <Pencil className="h-4 w-4" aria-hidden="true" />
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
               수정
             </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-danger"
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            <button type="button" onClick={onDelete} className={`${actionClass} text-danger`}>
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               삭제
             </button>
           </>
         ) : null}
         {pending ? null : (
-          <ReportForm mode={mode} targetType="comment" targetId={item.id} demoState={demo} onDemoState={onDemoState} />
+          <ReportForm
+            mode={mode}
+            targetType="comment"
+            targetId={item.id}
+            demoState={demo}
+            onDemoState={onDemoState}
+            compact
+          />
         )}
       </div>
       {likeError ? (

@@ -195,7 +195,13 @@ describe("demo votes", () => {
     if (!withVote.ok) {
       return;
     }
-    const reply = addDemoReply(withVote.state, "q1", withVote.value.id, "그 기준도 중요해요");
+    const secondComment = addDemoComment(withVote.state, "q1", "한 번 더");
+    assert.equal(secondComment.ok, true);
+    if (secondComment.ok) {
+      assert.equal(secondComment.state.comments.q1?.length, 2);
+    }
+    const replyBase = secondComment.ok ? secondComment.state : withVote.state;
+    const reply = addDemoReply(replyBase, "q1", withVote.value.id, "그 기준도 중요해요");
     assert.equal(reply.ok, true);
     if (!reply.ok) {
       return;
@@ -218,7 +224,7 @@ describe("demo votes", () => {
     const deleted = deleteDemoPost(edited.ok ? edited.state : reply.state, "q1", withVote.value.id);
     assert.equal(deleted.ok, true);
     if (deleted.ok) {
-      assert.equal(deleted.state.comments.q1, undefined);
+      assert.equal(deleted.state.comments.q1?.some((item) => item.id === withVote.value.id), false);
       assert.equal(deleted.state.replies.length, 0);
     }
   });

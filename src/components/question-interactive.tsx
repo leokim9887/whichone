@@ -45,7 +45,8 @@ export function QuestionInteractive({
   const [filter, setFilter] = useState("all");
 
   const demoVote = mode === "demo" ? demo.votes[question.id] : undefined;
-  const demoComment = mode === "demo" ? demo.comments[question.id] : undefined;
+  const demoComments = mode === "demo" ? demo.comments[question.id] ?? [] : [];
+  const demoComment = demoComments[0];
   const participation: Participation =
     mode === "demo"
       ? {
@@ -212,54 +213,47 @@ export function QuestionInteractive({
           <div>
             <h2 className="text-lg font-bold">선택 이유</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              이유는 선택 사항입니다. 이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다. 내 의견을 포함한 모든 이유에
-              답글을 여러 번 남기고 추천할 수 있습니다.
+              이유는 선택 사항입니다. 이름은 표시되지 않으며, 최대 {LIMITS.comment}자입니다. 의견과 답글은 여러 번 남길 수
+              있고, 추천도 할 수 있습니다.
             </p>
           </div>
-          {participation.comment ? (
-            participation.comment.status === "visible" ? (
-              <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">
-                내 의견을 남겼습니다. 아래 목록에서 내 의견에도 답글과 추천을 남길 수 있습니다.
+          {participation.comment && participation.comment.status !== "visible" ? (
+            <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">작성한 의견이 숨김 처리되었습니다.</p>
+          ) : null}
+          <form
+            className="space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveComment();
+            }}
+          >
+            <label className="block text-sm font-semibold" htmlFor="comment-body">
+              이 선택을 한 이유
+              <textarea
+                id="comment-body"
+                value={commentBody}
+                onChange={(event) => setCommentBody(event.target.value)}
+                maxLength={LIMITS.comment}
+                rows={4}
+                className="mt-2 w-full rounded-2xl border border-line bg-background px-3 py-3 font-normal"
+              />
+            </label>
+            <p className="text-right text-xs text-muted">
+              {commentBody.length}/{LIMITS.comment}
+            </p>
+            {commentError ? (
+              <p className="text-sm text-danger" role="alert">
+                {commentError}
               </p>
-            ) : (
-              <p className="rounded-2xl bg-background px-4 py-3 text-sm text-muted">작성한 의견이 숨김 처리되었습니다.</p>
-            )
-          ) : (
-            <form
-              className="space-y-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void saveComment();
-              }}
+            ) : null}
+            <button
+              type="submit"
+              disabled={commentSaving}
+              className="inline-flex min-h-11 items-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60"
             >
-              <label className="block text-sm font-semibold" htmlFor="comment-body">
-                이 선택을 한 이유
-                <textarea
-                  id="comment-body"
-                  value={commentBody}
-                  onChange={(event) => setCommentBody(event.target.value)}
-                  maxLength={LIMITS.comment}
-                  rows={4}
-                  className="mt-2 w-full rounded-2xl border border-line bg-background px-3 py-3 font-normal"
-                />
-              </label>
-              <p className="text-right text-xs text-muted">
-                {commentBody.length}/{LIMITS.comment}
-              </p>
-              {commentError ? (
-                <p className="text-sm text-danger" role="alert">
-                  {commentError}
-                </p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={commentSaving}
-                className="inline-flex min-h-11 items-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60"
-              >
-                {commentSaving ? "저장 중" : "이유 남기기"}
-              </button>
-            </form>
-          )}
+              {commentSaving ? "저장 중" : "이유 남기기"}
+            </button>
+          </form>
 
           <div>
             <h3 className="text-base font-bold">{mode === "demo" ? "이 브라우저에 남긴 이유" : "남긴 이유"}</h3>

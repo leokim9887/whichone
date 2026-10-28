@@ -17,12 +17,14 @@ export function ReportForm({
   targetId,
   demoState,
   onDemoState,
+  compact = false,
 }: {
   mode: DataMode;
   targetType: "question" | "comment";
   targetId: string;
   demoState?: DemoState;
   onDemoState?: (state: DemoState) => void;
+  compact?: boolean;
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -101,9 +103,13 @@ export function ReportForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-muted transition duration-300 hover:bg-background hover:text-foreground"
+        className={
+          compact
+            ? "inline-flex min-h-8 items-center gap-1 rounded-full px-2 text-xs font-semibold text-muted transition duration-300 hover:bg-background hover:text-foreground"
+            : "inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-muted transition duration-300 hover:bg-background hover:text-foreground"
+        }
       >
-        <Flag className="h-4 w-4" aria-hidden="true" />
+        <Flag className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} aria-hidden="true" />
         신고
       </button>
       {message ? (

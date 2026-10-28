@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import { EMPTY_DEMO_STATE, isDemoState, type DemoState } from "@/lib/demo-state";
+import { EMPTY_DEMO_STATE, isDemoState, normalizeDemoComments, type DemoState } from "@/lib/demo-state";
 
 export const DEMO_STORAGE_KEY = "whichone.demo.v1";
 const CHANGE_EVENT = "whichone-demo-change";
@@ -21,6 +21,7 @@ function parseRaw(raw: string | null): DemoState {
     }
     return {
       ...parsed,
+      comments: normalizeDemoComments(parsed.comments),
       replies: Array.isArray(parsed.replies) ? parsed.replies : [],
       likes: parsed.likes && typeof parsed.likes === "object" ? parsed.likes : {},
     };

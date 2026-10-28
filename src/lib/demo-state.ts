@@ -39,7 +39,7 @@ export type DemoReply = {
 
 export type DemoState = {
   votes: Record<string, DemoVote>;
-  comments: Record<string, DemoComment>;
+  comments: Record<string, DemoComment[]>;
   replies: DemoReply[];
   likes: Record<string, true>;
   suggestions: DemoSuggestion[];
@@ -58,14 +58,39 @@ export const EMPTY_DEMO_STATE: DemoState = {
 export type DemoMutation<T> = { ok: true; state: DemoState; value: T } | { ok: false; code: string };
 
 function clone(state: DemoState): DemoState {
+  const comments: Record<string, DemoComment[]> = {};
+  for (const [questionId, list] of Object.entries(state.comments ?? {})) {
+    comments[questionId] = [...list];
+  }
   return {
     votes: { ...state.votes },
-    comments: { ...state.comments },
+    comments,
     replies: [...(state.replies ?? [])],
     likes: { ...(state.likes ?? {}) },
     suggestions: [...state.suggestions],
     reports: [...state.reports],
   };
+}
+
+function rootsFor(state: DemoState, questionId: string): DemoComment[] {
+  return state.comments[questionId] ?? [];
+}
+
+export function normalizeDemoComments(value: unknown): Record<string, DemoComment[]> {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+  const next: Record<string, DemoComment[]> = {};
+  for (const [questionId, entry] of Object.entries(value as Record<string, unknown>)) {
+    if (Array.isArray(entry)) {
+      next[questionId] = entry.filter((item): item is DemoComment => Boolean(item && typeof item === "object"));
+      continue;
+    }
+    if (entry && typeof entry === "object") {
+      next[questionId] = [entry as DemoComment];
+    }
+  }
+  return next;
 }
 
 export function castDemoVote(
@@ -98,18 +123,16 @@ export function addDemoComment(
   if (!vote) {
     return { ok: false, code: "vote_required" };
   }
-  if (state.comments[questionId]) {
-    return { ok: false, code: "already_commented" };
-  }
 
+  const existing = rootsFor(state, questionId);
   const comment = {
-    id: `demo-comment-${questionId}`,
+    id: `demo-comment-${questionId}-${existing.length + 1}`,
     optionId: vote.optionId,
     body,
     createdAt: now,
   };
   const next = clone(state);
-  next.comments[questionId] = comment;
+  next.comments[questionId] = [comment, ...existing];
   return { ok: true, state: next, value: comment };
 }
 
@@ -121,11 +144,11 @@ export function addDemoReply(
   now = new Date().toISOString(),
 ): DemoMutation<DemoReply> {
   const vote = state.votes[questionId];
-  const parent = state.comments[questionId];
+  const parent = rootsFor(state, questionId).find((item) => item.id === parentId);
   if (!vote) {
     return { ok: false, code: "vote_required" };
   }
-  if (!parent || parent.id !== parentId) {
+  if (!parent) {
     return { ok: false, code: "not_found" };
   }
 
@@ -149,9 +172,15 @@ export function editDemoPost(
   body: string,
 ): DemoMutation<string> {
   const next = clone(state);
-  const root = next.comments[questionId];
-  if (root?.id === commentId) {
-    next.comments[questionId] = { ...root, body };
+  const roots = next.comments[questionId] ?? [];
+  const rootIndex = roots.findIndex((item) => item.id === commentId);
+  if (rootIndex >= 0) {
+    const current = roots[rootIndex];
+    if (!current) {
+      return { ok: false, code: "not_found" };
+    }
+    roots[rootIndex] = { ...current, body };
+    next.comments[questionId] = roots;
     return { ok: true, state: next, value: body };
   }
   const index = next.replies.findIndex((reply) => reply.id === commentId && reply.questionId === questionId);
@@ -168,15 +197,18 @@ export function editDemoPost(
 
 export function deleteDemoPost(state: DemoState, questionId: string, commentId: string): DemoMutation<null> {
   const next = clone(state);
-  const root = next.comments[questionId];
-  if (root?.id === commentId) {
+  const roots = next.comments[questionId] ?? [];
+  if (roots.some((item) => item.id === commentId)) {
     const removed = new Set<string>([commentId]);
     for (const reply of next.replies) {
       if (reply.parentId === commentId) {
         removed.add(reply.id);
       }
     }
-    delete next.comments[questionId];
+    next.comments[questionId] = roots.filter((item) => item.id !== commentId);
+    if (next.comments[questionId]?.length === 0) {
+      delete next.comments[questionId];
+    }
     next.replies = next.replies.filter((reply) => reply.parentId !== commentId);
     for (const id of removed) {
       delete next.likes[id];
@@ -198,9 +230,9 @@ export function toggleDemoLike(state: DemoState, questionId: string, commentId: 
   if (!vote) {
     return { ok: false, code: "vote_required" };
   }
-  const root = state.comments[questionId];
+  const root = rootsFor(state, questionId).some((item) => item.id === commentId);
   const reply = (state.replies ?? []).find((item) => item.id === commentId && item.questionId === questionId);
-  if (root?.id !== commentId && !reply) {
+  if (!root && !reply) {
     return { ok: false, code: "not_found" };
   }
   const next = clone(state);
@@ -214,13 +246,15 @@ export function toggleDemoLike(state: DemoState, questionId: string, commentId: 
 }
 
 export function demoPublicComments(state: DemoState, questionId: string): PublicComment[] {
-  const root = state.comments[questionId];
-  if (!root) {
+  const roots = rootsFor(state, questionId);
+  if (roots.length === 0) {
     return [];
   }
   const liked = (id: string) => Boolean(state.likes?.[id]);
-  return [
-    {
+  return roots
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((root) => ({
       id: root.id,
       optionId: root.optionId,
       body: root.body,
@@ -241,8 +275,7 @@ export function demoPublicComments(state: DemoState, questionId: string): Public
           likedByMe: liked(reply.id),
           mine: true,
         })),
-    },
-  ];
+    }));
 }
 
 export function addDemoSuggestion(
