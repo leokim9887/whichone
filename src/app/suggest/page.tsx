@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { SuggestForm } from "@/components/suggest-form";
+import { SuggestGate } from "@/components/suggest-gate";
 import { isSupabaseConfigured } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -24,15 +25,17 @@ async function SuggestScreen() {
       <header>
         <h1 className="text-3xl font-bold">질문 제안</h1>
         <p className="mt-3 leading-7 text-muted">
-          주제를 고른 뒤 세부 갈래의 예시를 눌러 시작할 수 있습니다. 예시는 고쳐 써도 됩니다. 제안은 검토한 뒤에만 공개됩니다.
+          주제를 고른 뒤 세부 갈래와 예시를 눌러 시작할 수 있습니다. 예시는 고쳐 써도 됩니다. 제안은 검토한 뒤에만 공개됩니다.
         </p>
       </header>
-      {mode === "demo" ? (
-        <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm leading-6 text-warn" role="status">
-          데모 모드의 제안은 이 브라우저에만 저장됩니다. 공유 데이터베이스로 전송되지 않으며 공개되지도 않습니다.
-        </p>
-      ) : null}
-      <SuggestForm mode={mode} />
+      <SuggestGate>
+        {mode === "demo" ? (
+          <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm leading-6 text-warn" role="status">
+            데모 모드의 제안은 이 브라우저에만 저장됩니다. 공유 데이터베이스로 전송되지 않으며 공개되지도 않습니다.
+          </p>
+        ) : null}
+        <SuggestForm mode={mode} />
+      </SuggestGate>
     </div>
   );
 }
