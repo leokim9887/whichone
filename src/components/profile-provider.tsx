@@ -68,7 +68,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const ensureProfile = useCallback(async () => {
     const current = mode === "demo" ? readDemoProfile() : liveProfile;
-    if (current?.nickname && current.avatarUrl) {
+    if (current?.nickname) {
       return true;
     }
     setOpen(true);

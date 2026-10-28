@@ -34,7 +34,7 @@ export type Option = {
 
 export type UserProfile = {
   nickname: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
 };
 
 export type Question = {

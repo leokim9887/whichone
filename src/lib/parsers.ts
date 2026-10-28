@@ -207,8 +207,14 @@ export function parseUserProfile(value: unknown): UserProfile | null {
     throw new Error("invalid profile");
   }
   const nickname = asString(value.nickname);
-  const avatarUrl = asString(value.avatarUrl);
-  if (!nickname || !avatarUrl) {
+  if (!nickname) {
+    throw new Error("invalid profile");
+  }
+  const avatarUrl =
+    value.avatarUrl === null || value.avatarUrl === undefined || value.avatarUrl === ""
+      ? null
+      : asString(value.avatarUrl);
+  if (avatarUrl === null && value.avatarUrl && value.avatarUrl !== "") {
     throw new Error("invalid profile");
   }
   return { nickname, avatarUrl };

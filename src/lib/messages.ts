@@ -15,7 +15,7 @@ const MESSAGES: Record<string, string> = {
   unavailable: "지금은 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
   unpublished: "아직 공개되지 않은 질문입니다.",
   vote_required: "투표한 뒤에 이유를 남길 수 있습니다.",
-  profile_required: "닉네임과 프로필 사진을 먼저 설정해 주세요.",
+  profile_required: "닉네임을 먼저 설정해 주세요.",
   nickname_taken: "이미 사용 중인 닉네임입니다. 다른 이름을 골라 주세요.",
 };
 

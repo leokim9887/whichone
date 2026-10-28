@@ -125,6 +125,10 @@ export function validateAvatarFile(
   return { ok: true, value: { file } };
 }
 
+export function clampNicknameInput(value: string): string {
+  return value.replace(/\s+/g, "").slice(0, LIMITS.nicknameMax);
+}
+
 export function validateProfileDraft(input: {
   nickname: string;
   avatarFile: File | null;
@@ -134,21 +138,15 @@ export function validateProfileDraft(input: {
   if (!nick.ok) {
     return nick;
   }
-  const needsAvatar = !input.existingAvatarUrl;
-  const avatar = validateAvatarFile(input.avatarFile, needsAvatar);
+  const avatar = validateAvatarFile(input.avatarFile, false);
   if (!avatar.ok) {
     return avatar;
-  }
-  if (!input.existingAvatarUrl && !avatar.value.file) {
-    return fail("프로필 사진을 선택해 주세요.", {
-      avatar: "프로필 사진을 선택해 주세요.",
-    });
   }
   return {
     ok: true,
     value: {
       nickname: nick.value.nickname,
-      avatarUrl: input.existingAvatarUrl ?? "",
+      avatarUrl: input.existingAvatarUrl,
       avatarFile: avatar.value.file,
     },
   };

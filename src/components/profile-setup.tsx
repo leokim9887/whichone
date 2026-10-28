@@ -6,10 +6,14 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
-import { suggestNickname, writeDemoProfile } from "@/lib/profile-storage";
+import {
+  isDemoNicknameTaken,
+  suggestNickname,
+  writeDemoProfile,
+} from "@/lib/profile-storage";
 import type { DataMode, UserProfile } from "@/lib/types";
-import { validateAvatarFile, validateNickname } from "@/lib/validation";
-import { saveProfileAction } from "@/server/actions";
+import { clampNicknameInput, validateAvatarFile, validateNickname } from "@/lib/validation";
+import { checkNicknameAvailableAction, saveProfileAction } from "@/server/actions";
 
 async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -33,12 +37,17 @@ export function ProfileSetupModal({
 }) {
   const titleId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [nickname, setNickname] = useState(() => initial?.nickname || suggestNickname());
+  const checkSeq = useRef(0);
+  const [nickname, setNickname] = useState(() =>
+    clampNicknameInput(initial?.nickname || suggestNickname()),
+  );
   const [preview, setPreview] = useState<string | null>(initial?.avatarUrl ?? null);
   const [file, setFile] = useState<File | null>(null);
+  const [clearedAvatar, setClearedAvatar] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [checkingNick, setCheckingNick] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -48,6 +57,51 @@ export function ProfileSetupModal({
     };
   }, [preview]);
 
+  async function verifyNickname(value: string): Promise<boolean> {
+    const nick = validateNickname(value);
+    if (!nick.ok) {
+      setErrors((current) => ({ ...current, ...nick.errors }));
+      return false;
+    }
+
+    if (mode === "demo") {
+      if (isDemoNicknameTaken(nick.value.nickname, initial?.nickname)) {
+        const taken = messageForCode("nickname_taken");
+        setErrors((current) => ({ ...current, nickname: taken }));
+        return false;
+      }
+      setErrors((current) => {
+        const next = { ...current };
+        delete next.nickname;
+        return next;
+      });
+      return true;
+    }
+
+    const seq = ++checkSeq.current;
+    setCheckingNick(true);
+    const result = await checkNicknameAvailableAction(nick.value.nickname);
+    if (seq !== checkSeq.current) {
+      return false;
+    }
+    setCheckingNick(false);
+    if (!result.ok) {
+      setErrors((current) => ({ ...current, ...(result.errors ?? { nickname: result.message }) }));
+      return false;
+    }
+    if (!result.available) {
+      const taken = messageForCode("nickname_taken");
+      setErrors((current) => ({ ...current, nickname: taken }));
+      return false;
+    }
+    setErrors((current) => {
+      const next = { ...current };
+      delete next.nickname;
+      return next;
+    });
+    return true;
+  }
+
   async function save() {
     setMessage(null);
     const nick = validateNickname(nickname);
@@ -55,20 +109,20 @@ export function ProfileSetupModal({
       setErrors(nick.errors);
       return;
     }
-    const avatar = validateAvatarFile(file, !initial?.avatarUrl && !preview);
+    const avatar = validateAvatarFile(file, false);
     if (!avatar.ok) {
       setErrors(avatar.errors);
       return;
     }
-    if (!file && !initial?.avatarUrl && !preview) {
-      setErrors({ avatar: "프로필 사진을 선택해 주세요." });
+    const available = await verifyNickname(nick.value.nickname);
+    if (!available) {
       return;
     }
     setErrors({});
     setPending(true);
 
     if (mode === "demo") {
-      let avatarUrl = initial?.avatarUrl ?? "";
+      let avatarUrl: string | null = clearedAvatar ? null : (initial?.avatarUrl ?? null);
       if (file) {
         try {
           avatarUrl = await readFileAsDataUrl(file);
@@ -77,13 +131,8 @@ export function ProfileSetupModal({
           setErrors({ avatar: "사진을 읽지 못했습니다. 다시 선택해 주세요." });
           return;
         }
-      } else if (preview && !preview.startsWith("blob:")) {
+      } else if (preview && !preview.startsWith("blob:") && !clearedAvatar) {
         avatarUrl = preview;
-      }
-      if (!avatarUrl) {
-        setPending(false);
-        setErrors({ avatar: "프로필 사진을 선택해 주세요." });
-        return;
       }
       const profile = { nickname: nick.value.nickname, avatarUrl };
       writeDemoProfile(profile);
@@ -96,6 +145,8 @@ export function ProfileSetupModal({
     formData.set("nickname", nick.value.nickname);
     if (file) {
       formData.set("avatar", file);
+    } else if (clearedAvatar) {
+      formData.set("clearAvatar", "1");
     } else if (initial?.avatarUrl) {
       formData.set("keepAvatarUrl", initial.avatarUrl);
     }
@@ -128,8 +179,21 @@ export function ProfileSetupModal({
     if (preview?.startsWith("blob:")) {
       URL.revokeObjectURL(preview);
     }
+    setClearedAvatar(false);
     setFile(picked);
     setPreview(URL.createObjectURL(picked));
+  }
+
+  function clearPhoto() {
+    if (preview?.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
+    setFile(null);
+    setPreview(null);
+    setClearedAvatar(true);
+    if (fileRef.current) {
+      fileRef.current.value = "";
+    }
   }
 
   return (
@@ -146,7 +210,7 @@ export function ProfileSetupModal({
               {initial ? "프로필 수정" : "프로필 설정"}
             </h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              투표·댓글·답글·질문 제안 전에 고유 닉네임과 프로필 사진을 정해 주세요.
+              투표·댓글·답글·질문 제안 전에 고유 닉네임을 정해 주세요. 프로필 사진은 선택 사항입니다.
             </p>
           </div>
           <button
@@ -191,12 +255,26 @@ export function ProfileSetupModal({
               className="sr-only"
               onChange={(event) => onPick(event.target.files)}
             />
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="text-xs font-semibold text-accent"
+              >
+                사진 선택
+              </button>
+              {preview ? (
+                <button type="button" onClick={clearPhoto} className="text-xs font-semibold text-muted">
+                  사진 없애기
+                </button>
+              ) : null}
+            </div>
             {errors.avatar ? (
               <p className="text-sm text-danger" role="alert">
                 {errors.avatar}
               </p>
             ) : (
-              <p className="text-xs text-muted">JPG·PNG·WEBP, 최대 2MB</p>
+              <p className="text-xs text-muted">선택 사항 · JPG·PNG·WEBP, 최대 2MB</p>
             )}
           </div>
 
@@ -205,15 +283,30 @@ export function ProfileSetupModal({
             <input
               id="profile-nickname"
               value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
+              onChange={(event) => {
+                setNickname(clampNicknameInput(event.target.value));
+                setErrors((current) => {
+                  if (!current.nickname) {
+                    return current;
+                  }
+                  const next = { ...current };
+                  delete next.nickname;
+                  return next;
+                });
+              }}
+              onBlur={() => {
+                void verifyNickname(nickname);
+              }}
               maxLength={LIMITS.nicknameMax}
               autoComplete="nickname"
               placeholder="어느분1234"
+              aria-invalid={Boolean(errors.nickname)}
               className="mt-2 w-full rounded-2xl border border-line bg-background px-3 py-3 font-normal"
             />
           </label>
           <p className="text-right text-xs text-muted">
-            {nickname.trim().length}/{LIMITS.nicknameMax} · 한글·영문·숫자·_
+            {nickname.length}/{LIMITS.nicknameMax} · 한글·영문·숫자·_
+            {checkingNick ? " · 확인 중" : ""}
           </p>
           {errors.nickname ? (
             <p className="text-sm text-danger" role="alert">
@@ -237,7 +330,7 @@ export function ProfileSetupModal({
             </button>
             <button
               type="submit"
-              disabled={pending}
+              disabled={pending || checkingNick || Boolean(errors.nickname)}
               className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
             >
               {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}

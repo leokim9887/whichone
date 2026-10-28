@@ -101,6 +101,37 @@ export async function getMyProfileAction(): Promise<UserProfile | null> {
   }
 }
 
+export async function checkNicknameAvailableAction(
+  nickname: string,
+): Promise<{ ok: true; available: boolean } | { ok: false; code: string; message: string; errors?: FieldErrors }> {
+  if (!isSupabaseConfigured()) {
+    return { ok: true, available: true };
+  }
+  const nick = validateNickname(nickname);
+  if (!nick.ok) {
+    return { ok: false, code: "invalid", message: nick.message, errors: nick.errors };
+  }
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("is_nickname_available", {
+      p_nickname: nick.value.nickname,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    return { ok: true, available: result.extra.available === true };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
 export async function saveProfileAction(formData: FormData): Promise<
   | { ok: true; profile: UserProfile }
   | { ok: false; code: string; message: string; errors?: FieldErrors }
@@ -118,8 +149,9 @@ export async function saveProfileAction(formData: FormData): Promise<
   const avatarEntry = formData.get("avatar");
   const avatarFile = avatarEntry instanceof File && avatarEntry.size > 0 ? avatarEntry : null;
   const keepUrl = String(formData.get("keepAvatarUrl") ?? "").trim();
+  const clearAvatar = String(formData.get("clearAvatar") ?? "") === "1";
 
-  const avatarCheck = validateAvatarFile(avatarFile, !keepUrl);
+  const avatarCheck = validateAvatarFile(avatarFile, false);
   if (!avatarCheck.ok) {
     return { ok: false, code: "invalid", message: avatarCheck.message, errors: avatarCheck.errors };
   }
@@ -135,7 +167,7 @@ export async function saveProfileAction(formData: FormData): Promise<
       return failure("auth_required");
     }
 
-    let avatarUrl = keepUrl;
+    let avatarUrl: string | null = clearAvatar ? null : keepUrl || null;
     if (avatarFile) {
       if (!(AVATAR_MIME_TYPES as readonly string[]).includes(avatarFile.type) || avatarFile.size > LIMITS.avatarBytes) {
         return failure("invalid", { avatar: "프로필 사진을 다시 선택해 주세요." });
@@ -155,10 +187,6 @@ export async function saveProfileAction(formData: FormData): Promise<
       avatarUrl = `${publicUrl}?v=${Date.now()}`;
     }
 
-    if (!avatarUrl) {
-      return failure("invalid", { avatar: "프로필 사진을 선택해 주세요." });
-    }
-
     const { data, error } = await auth.supabase.rpc("upsert_my_profile", {
       p_nickname: nick.value.nickname,
       p_avatar_url: avatarUrl,
@@ -168,6 +196,14 @@ export async function saveProfileAction(formData: FormData): Promise<
     }
     const result = parseActionResult(data);
     if (!result.ok) {
+      if (result.code === "nickname_taken") {
+        return {
+          ok: false,
+          code: result.code,
+          message: messageForCode(result.code),
+          errors: { nickname: messageForCode(result.code) },
+        };
+      }
       return failure(result.code);
     }
     const profile = parseUserProfile(result.extra.profile) ?? {
