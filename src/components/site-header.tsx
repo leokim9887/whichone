@@ -18,12 +18,6 @@ export function SiteHeader() {
         </Link>
         <nav className="flex items-center gap-2 text-sm font-semibold">
           <ProfileMenu />
-          <Link
-            href="/suggest"
-            className="inline-flex min-h-11 items-center rounded-2xl bg-accent px-3 text-white hover:bg-accent-strong"
-          >
-            질문 제안
-          </Link>
         </nav>
       </div>
     </header>
