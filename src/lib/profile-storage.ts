@@ -120,13 +120,7 @@ export function clearDemoProfile(): void {
   if (typeof window === "undefined") {
     return;
   }
-  const previous = readDemoProfile();
-  if (previous?.nickname) {
-    const nicknames = readDemoNicknames().filter(
-      (item) => item.trim().toLowerCase() !== previous.nickname.trim().toLowerCase(),
-    );
-    window.localStorage.setItem(DEMO_NICKNAMES_KEY, JSON.stringify(nicknames));
-  }
+  window.localStorage.removeItem(DEMO_NICKNAMES_KEY);
   window.localStorage.removeItem(PROFILE_STORAGE_KEY);
   cachedRaw = null;
   cachedProfile = null;

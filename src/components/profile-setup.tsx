@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
+import { clearDemoParticipation } from "@/lib/demo-storage";
 import {
   clearDemoProfile,
   isDemoNicknameTaken,
@@ -209,7 +210,7 @@ export function ProfileSetupModal({
       return;
     }
     const confirmed = window.confirm(
-      "프로필을 삭제할까요? 닉네임과 사진이 지워지며, 다시 설정하기 전에는 투표·댓글·질문 제안을 할 수 없습니다.",
+      "프로필을 삭제할까요? 닉네임·사진과 함께 이 계정으로 만든 질문, 투표, 댓글·답글도 모두 지워집니다. 다시 설정하기 전에는 참여할 수 없습니다.",
     );
     if (!confirmed) {
       return;
@@ -218,6 +219,7 @@ export function ProfileSetupModal({
     setDeleting(true);
 
     if (mode === "demo") {
+      clearDemoParticipation();
       clearDemoProfile();
       setDeleting(false);
       onDeleted();

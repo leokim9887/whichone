@@ -74,3 +74,7 @@ export function writeDemoState(state: DemoState): void {
   cachedState = state;
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
+
+export function clearDemoParticipation(): void {
+  writeDemoState(EMPTY_DEMO_STATE);
+}
