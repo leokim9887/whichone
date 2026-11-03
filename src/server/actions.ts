@@ -543,7 +543,7 @@ export async function submitSuggestionAction(input: {
     }
     return {
       ok: true,
-      message: "질문을 바로 공개했습니다.",
+      message: "",
     };
   } catch {
     return failure("unavailable");

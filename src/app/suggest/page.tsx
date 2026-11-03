@@ -24,9 +24,6 @@ async function SuggestScreen() {
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
         <h1 className="text-3xl font-bold">질문 작성</h1>
-        <p className="mt-3 leading-7 text-muted">
-          주제와 세부 주제를 고른 뒤 질문과 선택지를 직접 작성해 주세요. 프로필을 설정한 뒤에는 질문이 바로 공개됩니다.
-        </p>
       </header>
       <SuggestGate>
         {mode === "demo" ? (

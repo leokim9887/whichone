@@ -48,8 +48,8 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
 
     if (mode === "demo") {
       const result = addDemoSuggestion(readDemoState(), validated.value);
-      setPending(false);
       if (!result.ok) {
+        setPending(false);
         setMessage(messageForCode(result.code));
         return;
       }
@@ -67,8 +67,8 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       options,
       company,
     });
-    setPending(false);
     if (!result.ok) {
+      setPending(false);
       if (result.code === "profile_required") {
         openSetup();
       }
