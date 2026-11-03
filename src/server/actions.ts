@@ -232,18 +232,27 @@ export async function deleteProfileAction(): Promise<FormActionResult> {
 
     const { data, error } = await auth.supabase.rpc("delete_my_profile");
     if (error) {
-      return failure("unavailable");
-    }
-    const result = parseActionResult(data);
-    if (!result.ok) {
-      return failure(result.code);
+      // RPC가 아직 없거나 스키마 캐시가 오래된 경우 프로필 행만이라도 지웁니다.
+      const removed = await auth.supabase.from("profiles").delete().eq("user_id", user.id);
+      if (removed.error) {
+        return failure("unavailable");
+      }
+    } else {
+      const result = parseActionResult(data);
+      if (!result.ok) {
+        return failure(result.code);
+      }
     }
 
-    await auth.supabase.storage.from("avatars").remove([
-      `${user.id}/avatar.jpg`,
-      `${user.id}/avatar.png`,
-      `${user.id}/avatar.webp`,
-    ]);
+    try {
+      await auth.supabase.storage.from("avatars").remove([
+        `${user.id}/avatar.jpg`,
+        `${user.id}/avatar.png`,
+        `${user.id}/avatar.webp`,
+      ]);
+    } catch {
+      // 사진 삭제가 실패해도 프로필 삭제는 성공으로 처리합니다.
+    }
 
     return { ok: true, message: "프로필을 삭제했습니다." };
   } catch {

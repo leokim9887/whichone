@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { QuestionCard } from "@/components/question-card";
 import { CATEGORY_LABEL, isCategoryFilter, type CategoryFilter } from "@/lib/categories";
@@ -38,7 +38,9 @@ export function HomeBrowser({
   const [category, setCategory] = useState(initialCategory);
   const [topic, setTopic] = useState(initialTopic);
   const [query, setQuery] = useState(initialQuery);
+  const [draftQuery, setDraftQuery] = useState(initialQuery);
   const [sort, setSort] = useState<QuestionSort>("popular");
+  const [, startTransition] = useTransition();
   const voted = useMemo(() => new Set(votedIds), [votedIds]);
   const counts = useMemo(() => {
     const tally = new Map<Category, number>();
@@ -47,8 +49,11 @@ export function HomeBrowser({
     }
     return tally;
   }, [questions]);
-  const filtered = filterQuestions(questions, category, topic, query);
-  const sorted = sortQuestions(filtered, sort);
+  const filtered = useMemo(
+    () => filterQuestions(questions, category, topic, query),
+    [questions, category, topic, query],
+  );
+  const sorted = useMemo(() => sortQuestions(filtered, sort), [filtered, sort]);
   const browsingTopics = category === "all" && query.trim().length === 0;
 
   useEffect(() => {
@@ -57,6 +62,7 @@ export function HomeBrowser({
       setCategory(next.category);
       setTopic(next.topic);
       setQuery(next.query);
+      setDraftQuery(next.query);
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -73,10 +79,22 @@ export function HomeBrowser({
     writeFilters(category, next, query, true);
   }
 
-  function changeQuery(next: string) {
-    const value = next.slice(0, LIMITS.search);
-    setQuery(value);
-    writeFilters(category, topic, value, false);
+  function applySearch(raw: string) {
+    const value = raw.slice(0, LIMITS.search);
+    const applied = value.trim();
+    setDraftQuery(value);
+    startTransition(() => {
+      setQuery(applied);
+      writeFilters(category, topic, applied, false);
+    });
+  }
+
+  function clearSearch() {
+    setDraftQuery("");
+    startTransition(() => {
+      setQuery("");
+      writeFilters(category, topic, "", false);
+    });
   }
 
   return (
@@ -90,18 +108,32 @@ export function HomeBrowser({
           className="flex w-full gap-2 sm:max-w-sm"
           onSubmit={(event) => {
             event.preventDefault();
+            applySearch(draftQuery);
           }}
         >
           <label className="sr-only" htmlFor="question-search">
             질문 검색
           </label>
-          <input
-            id="question-search"
-            value={query}
-            onChange={(event) => changeQuery(event.target.value)}
-            placeholder="질문 검색"
-            className="min-h-11 w-full rounded-2xl border border-line bg-card px-4 text-sm outline-none transition duration-300 focus:border-foreground"
-          />
+          <div className="relative min-w-0 flex-1">
+            <input
+              id="question-search"
+              value={draftQuery}
+              onChange={(event) => setDraftQuery(event.target.value.slice(0, LIMITS.search))}
+              placeholder="질문 검색"
+              maxLength={LIMITS.search}
+              className="min-h-11 w-full rounded-2xl border border-line bg-card py-2 pr-10 pl-4 text-sm outline-none transition duration-300 focus:border-foreground"
+            />
+            {draftQuery ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute top-1/2 right-2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-background hover:text-foreground"
+                aria-label="검색어 지우기"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
           <button type="submit" className="min-h-11 shrink-0 rounded-2xl border border-line bg-card px-4 text-sm font-semibold">
             검색
           </button>
