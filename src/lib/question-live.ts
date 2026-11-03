@@ -27,6 +27,15 @@ export async function deleteMyQuestionLive(
   const rpcName = source === "suggestion" ? "delete_my_pending_suggestion" : "delete_my_question";
   const { data, error } = await supabase.rpc(rpcName, { p_id: id });
   if (error) {
+    // option_count 트리거로 하드 삭제가 막힌 경우 서버 액션도 동일하게 실패하므로 원인을 분명히 알림
+    if (error.code === "23514" || /option_count/i.test(error.message ?? "")) {
+      return {
+        ok: false,
+        code: "unavailable",
+        message:
+          "질문 삭제가 DB 제약에 막혀 있습니다. Supabase SQL Editor에서 scripts/fix-question-delete.sql 을 실행한 뒤 다시 시도해 주세요.",
+      };
+    }
     return toDeleteResult(await deleteMyQuestionAction(id, source));
   }
 
