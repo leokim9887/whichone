@@ -1,8 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useProfile } from "@/components/profile-provider";
+import { messageForCode } from "@/lib/messages";
+import { canWriteQuestionToday } from "@/lib/suggest-quota";
 
 export function SuggestGate({ children }: { children: ReactNode }) {
   const { profile, loading, openSetup } = useProfile();
@@ -15,9 +18,7 @@ export function SuggestGate({ children }: { children: ReactNode }) {
     return (
       <div className="rounded-3xl border border-line bg-card px-5 py-8">
         <h2 className="text-xl font-bold">프로필이 필요합니다</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          닉네임을 정한 뒤에만 질문을 작성할 수 있습니다.
-        </p>
+        <p className="mt-2 text-sm leading-6 text-muted">닉네임을 정한 뒤에만 질문을 작성할 수 있습니다.</p>
         <button
           type="button"
           onClick={openSetup}
@@ -27,6 +28,36 @@ export function SuggestGate({ children }: { children: ReactNode }) {
         </button>
       </div>
     );
+  }
+
+  return <SuggestQuotaGuard>{children}</SuggestQuotaGuard>;
+}
+
+function SuggestQuotaGuard({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const [status, setStatus] = useState<"pending" | "ok" | "blocked">("pending");
+
+  useEffect(() => {
+    let cancelled = false;
+    void canWriteQuestionToday().then((allowed) => {
+      if (cancelled) {
+        return;
+      }
+      if (!allowed) {
+        window.alert(messageForCode("rate_limited"));
+        setStatus("blocked");
+        router.replace("/");
+        return;
+      }
+      setStatus("ok");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (status !== "ok") {
+    return <div className="h-80 rounded-3xl bg-card" aria-hidden="true" />;
   }
 
   return children;

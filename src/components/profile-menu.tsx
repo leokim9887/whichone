@@ -12,6 +12,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useProfile } from "@/components/profile-provider";
+import { SuggestEntryButton } from "@/components/suggest-entry-button";
 
 const itemClass =
   "flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold hover:bg-background";
@@ -92,15 +93,14 @@ export function ProfileMenu() {
             <Pencil className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
             프로필 수정
           </button>
-          <Link
-            href="/suggest"
+          <SuggestEntryButton
             role="menuitem"
             className={itemClass}
-            onClick={() => setOpen(false)}
+            onBeforeNavigate={() => setOpen(false)}
           >
             <Lightbulb className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
             질문 작성
-          </Link>
+          </SuggestEntryButton>
           <div className="my-1 border-t border-line" role="separator" />
           <Link
             href="/me/questions"

@@ -50,6 +50,9 @@ export function ContentPolicyNotice() {
             지나치게 정치적이거나 선정·폭력적인 주제와 표현은 검토 후 비공개되거나 삭제될 수 있습니다. 서로 존중하는
             질문과 의견을 남겨 주세요.
           </p>
+          <p className="mt-2 text-sm leading-6 text-[#8a5a14]">
+            질문 작성은 프로필당 하루 최대 <span className="font-semibold">3개</span>입니다.
+          </p>
         </div>
         <button
           type="button"

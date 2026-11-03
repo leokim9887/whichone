@@ -500,6 +500,39 @@ export async function toggleCommentLikeAction(
   }
 }
 
+export async function getMyQuestionWriteQuotaAction(): Promise<
+  | { ok: true; allowed: boolean; used: number; limit: number }
+  | { ok: false; code: string; message: string }
+> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("my_question_write_quota");
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    const used = typeof result.extra.used === "number" ? result.extra.used : Number(result.extra.used);
+    const limit = typeof result.extra.limit === "number" ? result.extra.limit : Number(result.extra.limit);
+    const allowed = result.extra.allowed === true;
+    if (!Number.isFinite(used) || !Number.isFinite(limit)) {
+      return failure("unavailable");
+    }
+    return { ok: true, allowed, used, limit };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
 export async function deleteMyQuestionAction(
   id: string,
   source: "question" | "suggestion",
