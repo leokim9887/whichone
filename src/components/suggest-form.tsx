@@ -8,7 +8,7 @@ import { addDemoSuggestion } from "@/lib/demo-state";
 import { readDemoState, writeDemoState } from "@/lib/demo-storage";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
-import { topicById, topicsFor, type Topic } from "@/lib/topics";
+import { topicsFor, type Topic } from "@/lib/topics";
 import { CATEGORIES, type Category, type DataMode } from "@/lib/types";
 import { validateSuggestion } from "@/lib/validation";
 import { submitSuggestionAction, type FieldErrors } from "@/server/actions";
@@ -93,18 +93,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
   }
 
   function chooseTopic(next: Topic) {
-    const previous = topicById(topic);
     setTopic(next.id);
-    setTitle((current) => (!current.trim() || current === previous?.exampleTitle ? next.exampleTitle : current));
-    setOptions((current) => {
-      const untouched =
-        current.every((item) => !item.trim()) ||
-        (previous !== null &&
-          current[0] === previous.exampleOptions[0] &&
-          current[1] === previous.exampleOptions[1] &&
-          current.slice(2).every((item) => !item.trim()));
-      return untouched ? [next.exampleOptions[0], next.exampleOptions[1]] : current;
-    });
   }
 
   const topicChoices = isCategoryValue(category) ? topicsFor(category) : [];
@@ -144,8 +133,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       {topicChoices.length > 0 ? (
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold">세부 주제</legend>
-          <p className="text-sm leading-6 text-muted">예시를 누르면 질문과 선택지가 채워집니다. 그대로 두거나 고쳐 쓰세요.</p>
-          <div className="grid gap-2">
+          <div className="flex flex-wrap gap-2">
             {topicChoices.map((item) => {
               const active = topic === item.id;
               return (
@@ -154,12 +142,11 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
                   type="button"
                   aria-pressed={active}
                   onClick={() => chooseTopic(item)}
-                  className={`rounded-2xl border px-4 py-3 text-left ${active ? "border-foreground bg-foreground text-card" : "border-line bg-background"}`}
+                  className={`inline-flex min-h-11 items-center rounded-2xl border px-4 text-sm font-semibold ${
+                    active ? "border-foreground bg-foreground text-card" : "border-line bg-background"
+                  }`}
                 >
-                  <span className="block text-sm font-semibold">{item.label}</span>
-                  <span className={`mt-1 block text-xs leading-5 ${active ? "text-card/80" : "text-muted"}`}>
-                    예: {item.exampleOptions[0]} / {item.exampleOptions[1]}
-                  </span>
+                  {item.label}
                 </button>
               );
             })}

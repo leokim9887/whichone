@@ -99,7 +99,7 @@ export function ProfileMenu() {
             onClick={() => setOpen(false)}
           >
             <Lightbulb className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
-            질문 제안
+            질문 작성
           </Link>
           <div className="my-1 border-t border-line" role="separator" />
           <Link

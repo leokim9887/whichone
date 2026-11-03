@@ -249,7 +249,7 @@ export function ProfileSetupModal({
               {initial ? "프로필 수정" : "프로필 설정"}
             </h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              투표·댓글·답글·질문 제안 전에 고유 닉네임을 정해 주세요. 프로필 사진은 선택 사항입니다.
+              투표·댓글·답글·질문 작성 전에 고유 닉네임을 정해 주세요. 프로필 사진은 선택 사항입니다.
             </p>
           </div>
           <button

@@ -188,7 +188,7 @@ export function QuestionInteractive({
               size="sm"
             />
             <span>
-              <span className="font-semibold text-foreground">{question.authorNickname}</span> 님이 제안한 질문
+              <span className="font-semibold text-foreground">{question.authorNickname}</span> 님이 작성한 질문
             </span>
           </div>
         ) : null}

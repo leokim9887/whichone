@@ -16,7 +16,7 @@ export function SuggestGate({ children }: { children: ReactNode }) {
       <div className="rounded-3xl border border-line bg-card px-5 py-8">
         <h2 className="text-xl font-bold">프로필이 필요합니다</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          닉네임을 정한 뒤에만 질문을 제안할 수 있습니다.
+          닉네임을 정한 뒤에만 질문을 작성할 수 있습니다.
         </p>
         <button
           type="button"
