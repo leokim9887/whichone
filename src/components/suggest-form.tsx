@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { useProfile } from "@/components/profile-provider";
@@ -14,7 +15,33 @@ import { CATEGORIES, type Category, type DataMode } from "@/lib/types";
 import { validateSuggestion } from "@/lib/validation";
 import { submitSuggestionAction, type FieldErrors } from "@/server/actions";
 
+const SUGGEST_RESET_KEY = "whichone:suggest-reset";
+
+function consumeSuggestResetKey(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    if (sessionStorage.getItem(SUGGEST_RESET_KEY) === "1") {
+      sessionStorage.removeItem(SUGGEST_RESET_KEY);
+      return `reset-${Date.now()}`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function SuggestForm({ mode }: { mode: DataMode }) {
+  const [instanceKey, setInstanceKey] = useState("default");
+  const resetKey = consumeSuggestResetKey();
+  if (resetKey && resetKey !== instanceKey) {
+    setInstanceKey(resetKey);
+  }
+  return <SuggestFormFields key={instanceKey} mode={mode} />;
+}
+
+function SuggestFormFields({ mode }: { mode: DataMode }) {
   const router = useRouter();
   const { ensureProfile, openSetup } = useProfile();
   const [title, setTitle] = useState("");
@@ -27,8 +54,39 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  function resetForm() {
+    setTitle("");
+    setDescription("");
+    setCategory("");
+    setTopic("");
+    setOptions(["", ""]);
+    setCompany("");
+    setErrors({});
+    setMessage(null);
+    setPending(false);
+  }
+
   function updateOption(index: number, value: string) {
     setOptions((current) => current.map((option, optionIndex) => (optionIndex === index ? value : option)));
+  }
+
+  function notifyRateLimited() {
+    const text = messageForCode("rate_limited");
+    window.alert(text);
+    setMessage(text);
+  }
+
+  function goHomeClean() {
+    try {
+      sessionStorage.setItem(SUGGEST_RESET_KEY, "1");
+    } catch {
+      // ignore storage failures
+    }
+    flushSync(() => {
+      resetForm();
+    });
+    router.replace("/");
+    router.refresh();
   }
 
   async function submit() {
@@ -50,12 +108,15 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       const result = addDemoSuggestion(readDemoState(), validated.value);
       if (!result.ok) {
         setPending(false);
+        if (result.code === "rate_limited") {
+          notifyRateLimited();
+          return;
+        }
         setMessage(messageForCode(result.code));
         return;
       }
       writeDemoState(result.state);
-      router.replace("/");
-      router.refresh();
+      goHomeClean();
       return;
     }
 
@@ -72,12 +133,15 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       if (result.code === "profile_required") {
         openSetup();
       }
+      if (result.code === "rate_limited") {
+        notifyRateLimited();
+        return;
+      }
       setErrors(result.errors ?? {});
       setMessage(result.message);
       return;
     }
-    router.replace("/");
-    router.refresh();
+    goHomeClean();
   }
 
   function chooseCategory(next: string) {

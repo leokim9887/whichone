@@ -1,3 +1,4 @@
+import { koreaDateKey } from "@/lib/daily";
 import { LIMITS } from "@/lib/limits";
 import type { Category, MyCommentItem, MyQuestionItem, PublicComment, SuggestionDraft } from "@/lib/types";
 
@@ -349,8 +350,10 @@ export function addDemoSuggestion(
   draft: SuggestionDraft,
   now = new Date().toISOString(),
 ): DemoMutation<DemoSuggestion> {
-  const dayAgo = Date.parse(now) - 24 * 60 * 60 * 1000;
-  const recent = state.suggestions.filter((suggestion) => Date.parse(suggestion.createdAt) >= dayAgo);
+  const today = koreaDateKey(new Date(now));
+  const recent = state.suggestions.filter(
+    (suggestion) => koreaDateKey(new Date(suggestion.createdAt)) === today,
+  );
   if (recent.length >= LIMITS.suggestionsPerDay) {
     return { ok: false, code: "rate_limited" };
   }

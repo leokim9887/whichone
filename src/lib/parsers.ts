@@ -72,21 +72,6 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     throw new Error("invalid options");
   }
 
-  const authorNickname =
-    value.authorNickname === null || value.authorNickname === undefined
-      ? null
-      : asString(value.authorNickname);
-  const authorAvatarUrl =
-    value.authorAvatarUrl === null || value.authorAvatarUrl === undefined
-      ? null
-      : asString(value.authorAvatarUrl);
-  if (authorNickname === null && value.authorNickname) {
-    throw new Error("invalid question");
-  }
-  if (authorAvatarUrl === null && value.authorAvatarUrl) {
-    throw new Error("invalid question");
-  }
-
   return {
     id,
     title,
@@ -98,8 +83,8 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     dailyFeatureDate,
     participantCount,
     commentCount,
-    authorNickname,
-    authorAvatarUrl,
+    authorNickname: null,
+    authorAvatarUrl: null,
     options,
   };
 }

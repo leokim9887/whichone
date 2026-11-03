@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { CommentThread } from "@/components/comment-thread";
-import { ProfileAvatar } from "@/components/profile-avatar";
 import { useProfile } from "@/components/profile-provider";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
@@ -181,17 +180,6 @@ export function QuestionInteractive({
         <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
         <h1 className="mt-2 text-3xl font-bold leading-snug">{question.title}</h1>
         {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
-        {question.authorNickname ? (
-          <div className="mt-3 flex items-center gap-2 text-sm text-muted">
-            <ProfileAvatar
-              profile={{ nickname: question.authorNickname, avatarUrl: question.authorAvatarUrl }}
-              size="sm"
-            />
-            <span>
-              <span className="font-semibold text-foreground">{question.authorNickname}</span> 님이 작성한 질문
-            </span>
-          </div>
-        ) : null}
         <p className="mt-3 text-sm text-muted">
           {mode === "demo"
             ? "공유 참여자 수는 집계하지 않습니다"

@@ -9,7 +9,7 @@ export const LIMITS = {
   avatarBytes: 2 * 1024 * 1024,
   minOptions: 2,
   maxOptions: 4,
-  suggestionsPerDay: 5,
+  suggestionsPerDay: 3,
   search: 80,
 } as const;
 

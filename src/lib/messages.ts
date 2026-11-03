@@ -11,7 +11,7 @@ const MESSAGES: Record<string, string> = {
   forbidden: "이 작업을 할 권한이 없습니다.",
   invalid: "입력 내용을 다시 확인해 주세요.",
   not_found: "대상을 찾을 수 없습니다.",
-  rate_limited: "오늘은 더 이상 질문을 작성할 수 없습니다. 내일 다시 시도해 주세요.",
+  rate_limited: "질문 작성은 하루 최대 3개입니다.",
   unavailable: "지금은 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.",
   unpublished: "아직 공개되지 않은 질문입니다.",
   vote_required: "투표한 뒤에 이유를 남길 수 있습니다.",
