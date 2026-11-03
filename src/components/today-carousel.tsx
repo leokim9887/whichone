@@ -41,7 +41,7 @@ export function TodayCarousel({ slides, dateLabel }: { slides: TodaySlide[]; dat
     <section
       aria-roledescription="캐러셀"
       aria-label="오늘의 질문"
-      className="rounded-[28px] border border-line bg-card p-5 sm:p-7"
+      className="rounded-[24px] border border-line bg-card p-4 sm:rounded-[28px] sm:p-7"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -89,11 +89,13 @@ export function TodayCarousel({ slides, dateLabel }: { slides: TodaySlide[]; dat
           </div>
         ) : null}
       </div>
-      <h2 className="mt-4 min-h-16 text-2xl font-bold leading-snug sm:min-h-20 sm:text-3xl">{slide.title}</h2>
+      <h2 className="mt-4 min-h-14 text-xl font-bold leading-snug break-keep sm:min-h-20 sm:text-3xl">
+        {slide.title}
+      </h2>
       <p className="mt-3 text-sm text-muted">{slide.countLabel}</p>
       <Link
         href={`/questions/${slide.id}`}
-        className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong"
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong sm:mt-6 sm:w-auto sm:justify-start"
       >
         선택하러 가기
       </Link>

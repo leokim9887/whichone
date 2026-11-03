@@ -177,16 +177,18 @@ export function HomeBrowser({
           </div>
 
           {category !== "all" ? (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              <TopicChip active={!topic} label="이 주제 전체" onClick={() => chooseTopic("")} />
-              {topicsFor(category).map((item) => (
-                <TopicChip
-                  key={item.id}
-                  active={topic === item.id}
-                  label={item.label}
-                  onClick={() => chooseTopic(item.id)}
-                />
-              ))}
+            <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="chip-scroll">
+                <TopicChip active={!topic} label="이 주제 전체" onClick={() => chooseTopic("")} />
+                {topicsFor(category).map((item) => (
+                  <TopicChip
+                    key={item.id}
+                    active={topic === item.id}
+                    label={item.label}
+                    onClick={() => chooseTopic(item.id)}
+                  />
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -237,7 +239,7 @@ function CategoryCard({
     <button
       type="button"
       onClick={onClick}
-      className="rise-in group relative min-h-48 overflow-hidden rounded-3xl border border-line text-left shadow-[0_1px_0_rgba(28,25,23,0.04)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_22px_50px_rgba(28,25,23,0.16)] sm:min-h-52"
+      className="rise-in group relative min-h-40 overflow-hidden rounded-3xl border border-line text-left shadow-[0_1px_0_rgba(28,25,23,0.04)] transition duration-500 active:scale-[0.99] hover:-translate-y-1.5 hover:shadow-[0_22px_50px_rgba(28,25,23,0.16)] sm:min-h-52"
       style={{ animationDelay: `${delay}ms` }}
     >
       <Image
@@ -250,10 +252,10 @@ function CategoryCard({
       />
       <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/5 transition duration-500 group-hover:from-black/80" />
       <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/25 opacity-0 transition duration-700 group-hover:left-full group-hover:opacity-100" />
-      <span className="relative flex h-full min-h-48 flex-col justify-end p-5 text-white sm:min-h-52">
+      <span className="relative flex h-full min-h-40 flex-col justify-end p-4 text-white sm:min-h-52 sm:p-5">
         <span className="text-xs font-medium tracking-wide text-white/80">질문 {count}개</span>
         <span className="mt-1 flex items-end justify-between gap-3">
-          <span className="text-2xl font-bold tracking-tight">{label}</span>
+          <span className="text-xl font-bold tracking-tight sm:text-2xl">{label}</span>
           <ArrowUpRight className="mb-1 h-5 w-5 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
         </span>
       </span>
@@ -263,7 +265,7 @@ function CategoryCard({
 
 function SortSwitch({ sort, onChange }: { sort: QuestionSort; onChange: (next: QuestionSort) => void }) {
   return (
-    <div className="relative grid w-full max-w-xs grid-cols-2 rounded-full border border-line bg-card p-1 shadow-[0_8px_24px_rgba(28,25,23,0.04)] sm:w-64">
+    <div className="relative grid w-full grid-cols-2 rounded-full border border-line bg-card p-1 shadow-[0_8px_24px_rgba(28,25,23,0.04)] sm:w-64 sm:max-w-xs">
       <span
         aria-hidden="true"
         className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-foreground shadow-[0_8px_18px_rgba(28,25,23,0.18)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"

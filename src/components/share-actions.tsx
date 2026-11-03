@@ -36,11 +36,11 @@ export function ShareActions({ title, description }: { title: string; descriptio
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
       <button
         type="button"
         onClick={() => void share()}
-        className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold sm:w-auto"
       >
         <Share2 className="h-4 w-4" aria-hidden="true" />
         공유하기
@@ -48,7 +48,7 @@ export function ShareActions({ title, description }: { title: string; descriptio
       <button
         type="button"
         onClick={() => void copyLink()}
-        className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold sm:w-auto"
       >
         {feedback === "링크를 복사했습니다." ? (
           <Check className="h-4 w-4" aria-hidden="true" />

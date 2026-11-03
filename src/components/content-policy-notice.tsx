@@ -21,7 +21,7 @@ export function ContentPolicyNotice() {
         <button
           type="button"
           onClick={() => writeContentPolicyVisible(true)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#f0d7a8] bg-[#fff8ee] px-3.5 text-sm font-semibold text-[#7a4e00] transition hover:bg-[#fff1d6]"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#f0d7a8] bg-[#fff8ee] px-3.5 text-sm font-semibold text-[#7a4e00] transition hover:bg-[#fff1d6] sm:w-auto sm:justify-start"
         >
           <WarnIcon className="h-4 w-4 shrink-0" />
           콘텐츠 이용 안내 보기

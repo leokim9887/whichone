@@ -248,12 +248,12 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
             ) : null}
           </div>
         ))}
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
             disabled={options.length >= LIMITS.maxOptions}
             onClick={() => setOptions((current) => [...current, ""])}
-            className="inline-flex min-h-11 items-center rounded-2xl border border-line px-4 text-sm font-semibold disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-line px-4 text-sm font-semibold disabled:opacity-50 sm:justify-start"
           >
             선택지 추가
           </button>
@@ -261,7 +261,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
             type="button"
             disabled={options.length <= LIMITS.minOptions}
             onClick={() => setOptions((current) => current.slice(0, -1))}
-            className="inline-flex min-h-11 items-center rounded-2xl border border-line px-4 text-sm font-semibold disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-line px-4 text-sm font-semibold disabled:opacity-50 sm:justify-start"
           >
             마지막 선택지 삭제
           </button>
@@ -284,7 +284,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-12 items-center rounded-2xl bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
       >
         {pending ? "올리는 중" : "질문 올리기"}
       </button>

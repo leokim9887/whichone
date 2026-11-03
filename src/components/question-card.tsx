@@ -19,7 +19,7 @@ export function QuestionCard({
       <p className="text-xs font-semibold tracking-wide text-accent">
         {categoryTopicLabel(question.category, question.topic)}
       </p>
-      <h3 className="mt-2 text-lg font-bold leading-7 text-foreground">{question.title}</h3>
+      <h3 className="mt-2 text-base font-bold leading-7 text-foreground break-keep sm:text-lg">{question.title}</h3>
       <div className="mt-5 flex items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {mode === "demo"

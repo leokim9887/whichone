@@ -530,11 +530,11 @@ function CommentActions({
   const likeLabel = item.likeCount > 0 ? `추천 ${item.likeCount}` : "추천";
   const pending = item.id.startsWith("pending-");
   const actionClass =
-    "inline-flex min-h-8 items-center gap-1 rounded-full px-2 text-xs font-semibold disabled:opacity-50";
+    "inline-flex min-h-10 items-center gap-1 rounded-full px-2.5 text-xs font-semibold disabled:opacity-50 sm:min-h-8 sm:px-2";
   return (
     <div className="mt-2">
-      <div className="flex flex-wrap items-center gap-0.5">
-        <time className="mr-auto text-[11px] text-muted" dateTime={item.createdAt}>
+      <div className="flex flex-wrap items-center gap-1">
+        <time className="mr-auto basis-full text-[11px] text-muted sm:basis-auto" dateTime={item.createdAt}>
           {formatDateTime(item.createdAt)}
         </time>
         <button

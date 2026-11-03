@@ -69,7 +69,7 @@ export function ProfileMenu() {
         aria-haspopup="menu"
         aria-controls={menuId}
         aria-label="프로필 메뉴"
-        className="inline-flex min-h-11 max-w-[10.5rem] items-center gap-1.5 rounded-2xl border border-line bg-card px-2.5 text-sm font-semibold text-foreground disabled:opacity-60"
+        className="inline-flex min-h-11 max-w-[9.5rem] items-center gap-1.5 rounded-2xl border border-line bg-card px-2 text-sm font-semibold text-foreground disabled:opacity-60 sm:max-w-[10.5rem] sm:px-2.5"
       >
         <ProfileAvatar profile={profile} size="sm" />
         <span className="truncate">{profile.nickname}</span>
@@ -79,7 +79,7 @@ export function ProfileMenu() {
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-line bg-card py-1 shadow-lg"
+          className="absolute right-0 z-30 mt-2 w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-card py-1 shadow-lg"
         >
           <button
             type="button"

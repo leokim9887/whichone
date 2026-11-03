@@ -178,7 +178,7 @@ export function QuestionInteractive({
     <div className="space-y-6">
       <header>
         <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
-        <h1 className="mt-2 text-3xl font-bold leading-snug">{question.title}</h1>
+        <h1 className="mt-2 text-2xl font-bold leading-snug break-keep sm:text-3xl">{question.title}</h1>
         {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
         <p className="mt-3 text-sm text-muted">
           {mode === "demo"
@@ -229,7 +229,7 @@ export function QuestionInteractive({
             type="button"
             onClick={() => void vote()}
             disabled={!selected || saving}
-            className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
           >
             {saving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             {saving ? "투표하는 중" : "투표하기"}
@@ -240,7 +240,7 @@ export function QuestionInteractive({
       {summary ? <ResultBars summary={summary} scope={mode === "demo" ? "browser" : "shared"} /> : null}
 
       {participation.voted ? (
-        <section className="space-y-4 rounded-3xl border border-line bg-card p-5">
+        <section className="space-y-4 rounded-3xl border border-line bg-card p-4 sm:p-5">
           <div>
             <h2 className="text-lg font-bold">댓글 달기</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
@@ -267,16 +267,16 @@ export function QuestionInteractive({
               maxLength={LIMITS.comment}
               rows={4}
               placeholder="생각을 짧게 남겨 주세요."
-              className="w-full rounded-2xl border border-line bg-background px-3 py-3 font-normal"
+              className="w-full rounded-2xl border border-line bg-background px-3 py-3 text-base font-normal"
             />
-            <div className="flex items-end justify-between gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
               <p className="text-xs text-muted">
                 {commentBody.length}/{LIMITS.comment}
               </p>
               <button
                 type="submit"
                 disabled={commentSaving}
-                className="inline-flex min-h-10 items-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60 sm:w-auto"
               >
                 {commentSaving ? "저장 중" : "등록"}
               </button>
@@ -289,19 +289,21 @@ export function QuestionInteractive({
           </form>
 
           <div>
-            <div className="flex gap-2 overflow-x-auto">
-              <FilterChip active={activeFilter === "all"} onClick={() => setFilter("all")} label="전체" />
-              {question.options
-                .slice()
-                .sort((a, b) => a.position - b.position)
-                .map((option) => (
-                  <FilterChip
-                    key={option.id}
-                    active={activeFilter === option.id}
-                    onClick={() => setFilter(option.id)}
-                    label={option.text}
-                  />
-                ))}
+            <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="chip-scroll">
+                <FilterChip active={activeFilter === "all"} onClick={() => setFilter("all")} label="전체" />
+                {question.options
+                  .slice()
+                  .sort((a, b) => a.position - b.position)
+                  .map((option) => (
+                    <FilterChip
+                      key={option.id}
+                      active={activeFilter === option.id}
+                      onClick={() => setFilter(option.id)}
+                      label={option.text}
+                    />
+                  ))}
+              </div>
             </div>
             {visibleComments.length === 0 ? (
               <p className="mt-4 text-sm leading-6 text-muted">댓글이 없습니다</p>

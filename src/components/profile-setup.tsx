@@ -236,12 +236,15 @@ export function ProfileSetupModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-4 sm:items-center" role="presentation">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-0 sm:items-center sm:p-4"
+      role="presentation"
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md rounded-3xl border border-line bg-card p-5 shadow-lg"
+        className="max-h-[min(92dvh,40rem)] w-full max-w-md overflow-y-auto rounded-t-3xl border border-line bg-card p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-lg sm:rounded-3xl sm:pb-5"
       >
         <div className="flex items-start justify-between gap-3">
           <div>

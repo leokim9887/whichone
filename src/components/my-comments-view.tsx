@@ -65,7 +65,7 @@ export function MyCommentsView({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
-        <h1 className="text-3xl font-bold">내가 쓴 댓글</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">내가 쓴 댓글</h1>
         <p className="mt-3 leading-7 text-muted">
           내가 남긴 댓글과 답글입니다. 항목을 누르면 해당 질문으로 이동하고, 필요하면 여기서 삭제할 수 있습니다.
         </p>
@@ -130,7 +130,7 @@ function CommentRows({
                 type="button"
                 disabled={busy}
                 onClick={() => onDelete(item)}
-                className="inline-flex min-h-11 items-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-50"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-50 sm:w-auto"
               >
                 {busy ? "삭제 중" : "삭제"}
               </button>

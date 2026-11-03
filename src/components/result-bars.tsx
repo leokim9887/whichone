@@ -31,8 +31,8 @@ export function ResultBars({
       <ul className="space-y-3">
         {summary.options.map((option) => (
           <li key={option.optionId}>
-            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-              <span className="font-semibold">
+            <div className="mb-1 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span className="min-w-0 font-semibold break-keep">
                 {option.text}
                 {option.isMine ? <span className="ml-2 text-accent">내 선택</span> : null}
               </span>

@@ -23,7 +23,7 @@ async function SuggestScreen() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
-        <h1 className="text-3xl font-bold">질문 작성</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">질문 작성</h1>
       </header>
       <SuggestGate>
         {mode === "demo" ? (

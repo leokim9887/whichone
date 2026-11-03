@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 
 import { ProfileProvider } from "@/components/profile-provider";
@@ -28,6 +28,21 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     type: "website",
   },
+  appleWebApp: {
+    capable: true,
+    title: "WhicHOne",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f3f0ea",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -42,7 +57,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             본문으로 건너뛰기
           </a>
           <SiteHeader />
-          <main id="content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+          <main
+            id="content"
+            className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:py-6"
+          >
             {children}
           </main>
           <SiteFooter />

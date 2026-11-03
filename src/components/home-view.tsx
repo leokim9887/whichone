@@ -22,15 +22,15 @@ export function HomeView({
   query: string;
 }) {
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 sm:space-y-10">
       {data.mode === "demo" ? <DemoNotice /> : null}
 
       <section className="max-w-2xl">
         <p className="text-sm font-semibold text-accent">사람들의 선택으로 완성되는 질문</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-5xl sm:leading-tight">
+        <h1 className="mt-2 text-[1.75rem] font-bold tracking-tight text-foreground leading-tight sm:text-5xl sm:leading-tight">
           다른 사람들은 어떻게 생각할까?
         </h1>
-        <p className="mt-4 text-base leading-7 text-muted">
+        <p className="mt-3 text-sm leading-7 text-muted sm:mt-4 sm:text-base">
           가벼운 질문에 내 선택을 남기고, 전체 비율과 다른 사람의 이유를 확인해 보세요.
         </p>
       </section>
