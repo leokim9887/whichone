@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { messageForCode } from "@/lib/messages";
-import { canWriteQuestionToday } from "@/lib/suggest-quota";
+import { canWriteQuestionToday, getCachedWriteAllowed } from "@/lib/suggest-quota";
 
 export function SuggestEntryButton({
   className,
@@ -24,9 +24,24 @@ export function SuggestEntryButton({
     if (pending) {
       return;
     }
+
+    const cached = getCachedWriteAllowed();
+    if (cached === false) {
+      window.alert(messageForCode("rate_limited"));
+      return;
+    }
+
+    if (cached === true) {
+      onBeforeNavigate?.();
+      router.push("/suggest");
+      // 백그라운드로 최신 한도 갱신
+      void canWriteQuestionToday({ force: true });
+      return;
+    }
+
     setPending(true);
     try {
-      const allowed = await canWriteQuestionToday();
+      const allowed = await canWriteQuestionToday({ force: true });
       if (!allowed) {
         window.alert(messageForCode("rate_limited"));
         return;

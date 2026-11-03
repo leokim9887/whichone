@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { useProfile } from "@/components/profile-provider";
 import { messageForCode } from "@/lib/messages";
-import { canWriteQuestionToday } from "@/lib/suggest-quota";
+import { canWriteQuestionToday, getCachedWriteAllowed } from "@/lib/suggest-quota";
 
 export function SuggestGate({ children }: { children: ReactNode }) {
   const { profile, loading, openSetup } = useProfile();
@@ -35,11 +35,23 @@ export function SuggestGate({ children }: { children: ReactNode }) {
 
 function SuggestQuotaGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [status, setStatus] = useState<"pending" | "ok" | "blocked">("pending");
+  const cached = getCachedWriteAllowed();
+  const [status, setStatus] = useState<"pending" | "ok" | "blocked">(
+    cached === false ? "blocked" : cached === true ? "ok" : "pending",
+  );
 
   useEffect(() => {
+    if (cached === false) {
+      window.alert(messageForCode("rate_limited"));
+      router.replace("/");
+      return;
+    }
+    if (cached === true) {
+      return;
+    }
+
     let cancelled = false;
-    void canWriteQuestionToday().then((allowed) => {
+    void canWriteQuestionToday({ force: true }).then((allowed) => {
       if (cancelled) {
         return;
       }
@@ -54,7 +66,7 @@ function SuggestQuotaGuard({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [cached, router]);
 
   if (status !== "ok") {
     return <div className="h-80 rounded-3xl bg-card" aria-hidden="true" />;

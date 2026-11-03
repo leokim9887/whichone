@@ -14,6 +14,7 @@ import {
 import { ProfileSetupModal } from "@/components/profile-setup";
 import { isSupabaseConfigured } from "@/lib/env";
 import { readDemoProfile, useDemoProfile } from "@/lib/profile-storage";
+import { invalidateWriteQuotaCache, prefetchWriteQuota } from "@/lib/suggest-quota";
 import type { DataMode, UserProfile } from "@/lib/types";
 import { getMyProfileAction } from "@/server/actions";
 
@@ -48,6 +49,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }
       setLiveProfile(profile);
       setLoading(false);
+      if (profile?.nickname) {
+        prefetchWriteQuota();
+      }
     });
     return () => {
       cancelled = true;
@@ -85,6 +89,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }
       setOpen(false);
       resolveWaiters(true);
+      prefetchWriteQuota();
     },
     [mode, resolveWaiters],
   );
@@ -93,6 +98,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     if (mode === "live") {
       setLiveProfile(null);
     }
+    invalidateWriteQuotaCache();
     setOpen(false);
     resolveWaiters(false);
   }, [mode, resolveWaiters]);

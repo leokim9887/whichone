@@ -10,6 +10,7 @@ import { addDemoSuggestion } from "@/lib/demo-state";
 import { readDemoState, writeDemoState } from "@/lib/demo-storage";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
+import { canWriteQuestionToday, invalidateWriteQuotaCache, setCachedWriteQuota } from "@/lib/suggest-quota";
 import { topicsFor, type Topic } from "@/lib/topics";
 import { CATEGORIES, type Category, type DataMode } from "@/lib/types";
 import { validateSuggestion } from "@/lib/validation";
@@ -72,6 +73,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
   function notifyRateLimited() {
     const text = messageForCode("rate_limited");
+    setCachedWriteQuota(false, LIMITS.suggestionsPerDay, LIMITS.suggestionsPerDay);
     window.alert(text);
     setMessage(text);
   }
@@ -82,6 +84,8 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     } catch {
       // ignore storage failures
     }
+    invalidateWriteQuotaCache();
+    void canWriteQuestionToday({ force: true });
     flushSync(() => {
       resetForm();
     });

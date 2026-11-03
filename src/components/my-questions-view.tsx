@@ -9,6 +9,7 @@ import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatDateTime, formatQuestionStats } from "@/lib/format";
 import { messageForCode } from "@/lib/messages";
 import { deleteMyQuestionLive } from "@/lib/question-live";
+import { canWriteQuestionToday, invalidateWriteQuotaCache } from "@/lib/suggest-quota";
 import { categoryTopicLabel } from "@/lib/topics";
 import type { DataMode, MyQuestionItem } from "@/lib/types";
 
@@ -63,6 +64,8 @@ export function MyQuestionsView({
         return;
       }
       writeDemoState(result.state);
+      invalidateWriteQuotaCache();
+      void canWriteQuestionToday({ force: true });
       return;
     }
 
@@ -73,6 +76,8 @@ export function MyQuestionsView({
       return;
     }
     setItems((current) => current.filter((row) => !(row.id === item.id && row.source === item.source)));
+    invalidateWriteQuotaCache();
+    void canWriteQuestionToday({ force: true });
     router.refresh();
   }
 
