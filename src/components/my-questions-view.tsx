@@ -8,9 +8,9 @@ import { deleteDemoSuggestion, demoMyQuestions } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatDateTime, formatQuestionStats } from "@/lib/format";
 import { messageForCode } from "@/lib/messages";
+import { deleteMyQuestionLive } from "@/lib/question-live";
 import { categoryTopicLabel } from "@/lib/topics";
 import type { DataMode, MyQuestionItem } from "@/lib/types";
-import { deleteMyQuestionAction } from "@/server/actions";
 
 function statusLabel(item: MyQuestionItem): string {
   if (item.source === "suggestion" || item.status === "pending") {
@@ -66,7 +66,7 @@ export function MyQuestionsView({
       return;
     }
 
-    const result = await deleteMyQuestionAction(item.id, item.source);
+    const result = await deleteMyQuestionLive(item.id, item.source);
     setPendingId(null);
     if (!result.ok) {
       setActionError(result.message || messageForCode(result.code));

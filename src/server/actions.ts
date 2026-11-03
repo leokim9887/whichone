@@ -45,8 +45,8 @@ type ServerClient = Awaited<ReturnType<typeof createServerSupabase>>;
 
 async function withUser(): Promise<{ supabase: ServerClient; errorCode: string | null }> {
   const supabase = await createServerSupabase();
-  const existing = await supabase.auth.getSession();
-  if (!existing.error && existing.data.session?.user) {
+  const existing = await supabase.auth.getUser();
+  if (!existing.error && existing.data.user) {
     return { supabase, errorCode: null };
   }
 
@@ -552,7 +552,8 @@ export async function deleteMyQuestionAction(
     const rpcName = source === "suggestion" ? "delete_my_pending_suggestion" : "delete_my_question";
     const { data, error } = await auth.supabase.rpc(rpcName, { p_id: id });
     if (error) {
-      return failure("unavailable");
+      const code = /JWT|session|auth/i.test(error.message) ? "auth_required" : "unavailable";
+      return failure(code);
     }
     const result = parseActionResult(data);
     if (!result.ok) {
