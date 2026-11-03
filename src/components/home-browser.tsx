@@ -173,7 +173,7 @@ export function HomeBrowser({
                 <span className="ml-2 font-normal text-muted">{filtered.length}개</span>
               </p>
             </div>
-            <SortSwitch sort={sort} onChange={setSort} />
+            {filtered.length > 0 ? <SortSwitch sort={sort} onChange={setSort} /> : null}
           </div>
 
           {category !== "all" ? (
