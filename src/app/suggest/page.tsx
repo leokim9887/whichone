@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "질문 제안",
-  description: "새로운 질문을 제안합니다. 검토 후에만 공개됩니다.",
+  description: "새로운 질문을 바로 공개합니다.",
 };
 
 export default function Page() {
@@ -25,7 +25,7 @@ async function SuggestScreen() {
       <header>
         <h1 className="text-3xl font-bold">질문 제안</h1>
         <p className="mt-3 leading-7 text-muted">
-          주제를 고른 뒤 세부 갈래와 예시를 눌러 시작할 수 있습니다. 예시는 고쳐 써도 됩니다. 제안은 검토한 뒤에만 공개됩니다.
+          주제를 고른 뒤 세부 갈래와 예시를 눌러 시작할 수 있습니다. 예시는 고쳐 써도 됩니다. 프로필을 설정한 뒤에는 질문이 바로 공개됩니다.
         </p>
       </header>
       <SuggestGate>

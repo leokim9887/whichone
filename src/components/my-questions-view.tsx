@@ -87,7 +87,7 @@ export function MyQuestionsView({
       <header>
         <h1 className="text-3xl font-bold">내 질문</h1>
         <p className="mt-3 leading-7 text-muted">
-          제안해 공개된 질문과 아직 검토 중인 제안을 모았습니다.
+          내가 올린 질문과, 예전에 검토 대기였던 제안이 있다면 함께 모았습니다.
         </p>
       </header>
       {mode === "demo" ? (

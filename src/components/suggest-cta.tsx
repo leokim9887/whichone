@@ -16,7 +16,7 @@ export function SuggestCta() {
     <section className="rounded-3xl bg-foreground px-5 py-6 text-card sm:px-8">
       <h2 className="text-2xl font-bold">이런 질문, 다른 사람들은 뭐라고 할까?</h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-card/80">
-        떠오른 질문을 제안해 주세요. 검토가 끝난 질문만 공개되어 누구나 투표할 수 있습니다.
+        떠오른 질문을 올려 주세요. 올리는 즉시 공개되어 누구나 투표할 수 있습니다.
       </p>
       <Link
         href="/suggest"

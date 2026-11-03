@@ -11,6 +11,7 @@ import type { QuestionStatus } from "@/lib/types";
 import {
   adminSignInAction,
   adminSignOutAction,
+  deleteQuestionAction,
   resolveReportAction,
   reviewSuggestionAction,
   setDailyFeatureAction,
@@ -177,16 +178,20 @@ export function AdminConsole({ dashboard, todayKey }: { dashboard: AdminDashboar
               >
                 숨기기
               </button>
-              {report.targetType === "comment" ? (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => void run(() => resolveReportAction(report.id, "remove"))}
-                  className="inline-flex min-h-11 items-center rounded-2xl border border-line px-4 text-sm font-semibold disabled:opacity-60"
-                >
-                  의견 삭제
-                </button>
-              ) : null}
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  const label = report.targetType === "question" ? "이 질문을 삭제할까요?" : "이 의견을 삭제할까요?";
+                  if (!window.confirm(label)) {
+                    return;
+                  }
+                  void run(() => resolveReportAction(report.id, "remove"));
+                }}
+                className="inline-flex min-h-11 items-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-60"
+              >
+                삭제
+              </button>
               <button
                 type="button"
                 disabled={pending}
@@ -234,6 +239,19 @@ export function AdminConsole({ dashboard, todayKey }: { dashboard: AdminDashboar
                   숨기기
                 </button>
               )}
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  if (!window.confirm("이 질문을 완전히 삭제할까요? 관련 투표와 댓글도 함께 지워집니다.")) {
+                    return;
+                  }
+                  void run(() => deleteQuestionAction(question.id));
+                }}
+                className="inline-flex min-h-11 items-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-60"
+              >
+                삭제
+              </button>
             </div>
             {question.status === "published" ? (
               <DailyFeatureControls

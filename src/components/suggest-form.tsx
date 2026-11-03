@@ -52,7 +52,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
         return;
       }
       writeDemoState(result.state);
-      setMessage("제안을 이 브라우저에만 저장했습니다. 검토 대기 상태이며 공개되지 않습니다.");
+      setMessage("질문을 이 브라우저에 저장했습니다. 데모에서는 공유 목록에 바로 나타나지 않습니다.");
       setTitle("");
       setDescription("");
       setCategory("");
@@ -242,7 +242,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
         disabled={pending}
         className="inline-flex min-h-12 items-center rounded-2xl bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60"
       >
-        {pending ? "보내는 중" : "검토 요청"}
+        {pending ? "올리는 중" : "질문 올리기"}
       </button>
     </form>
   );

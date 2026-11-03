@@ -46,7 +46,7 @@ export function HomeView({
       {!data.error && data.questions.length === 0 ? (
         <EmptyCopy
           title="아직 공개된 질문이 없습니다"
-          body="데이터베이스에 시드 질문을 넣거나, 직접 질문을 제안해 보세요. 제안은 검토 후 공개됩니다."
+          body="데이터베이스에 시드 질문을 넣거나, 직접 질문을 올려 보세요. 프로필을 설정한 뒤에는 바로 공개됩니다."
         />
       ) : null}
 

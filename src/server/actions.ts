@@ -515,7 +515,7 @@ export async function submitSuggestionAction(input: {
   if (input.company.trim()) {
     return {
       ok: true,
-      message: "제안을 받았습니다. 검토가 끝난 뒤에만 공개됩니다.",
+      message: "질문을 공개했습니다.",
     };
   }
   if (!isSupabaseConfigured()) {
@@ -543,7 +543,7 @@ export async function submitSuggestionAction(input: {
     }
     return {
       ok: true,
-      message: "제안을 받았습니다. 검토가 끝난 뒤에만 공개됩니다.",
+      message: "질문을 바로 공개했습니다.",
     };
   } catch {
     return failure("unavailable");
@@ -657,6 +657,15 @@ export async function setQuestionStatusAction(
   });
 }
 
+export async function deleteQuestionAction(id: string): Promise<FormActionResult> {
+  if (!isUuid(id)) {
+    return failure("invalid");
+  }
+  return runAdminRpc("admin_delete_question", {
+    p_id: id,
+  });
+}
+
 export async function setDailyFeatureAction(id: string, dateKey: string): Promise<FormActionResult> {
   if (!isUuid(id)) {
     return failure("invalid");
@@ -688,6 +697,7 @@ async function runAdminRpc(
   name:
     | "admin_review_suggestion"
     | "admin_set_question_status"
+    | "admin_delete_question"
     | "admin_resolve_report"
     | "admin_set_daily_feature",
   args: Record<string, string>,
