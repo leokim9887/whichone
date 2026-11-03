@@ -109,9 +109,64 @@ textarea {
   transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 
+.content-policy-notice {
+  animation: content-policy-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.content-policy-glow {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, #f59e0b, #d97706, #f59e0b);
+  background-size: 100% 200%;
+  animation: content-policy-bar 2.8s ease-in-out infinite;
+}
+
+.content-policy-icon {
+  animation: content-policy-soft-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes content-policy-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes content-policy-bar {
+  0%,
+  100% {
+    background-position: 0 0;
+    opacity: 0.75;
+  }
+  50% {
+    background-position: 0 100%;
+    opacity: 1;
+  }
+}
+
+@keyframes content-policy-soft-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.12);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
-  .today-progress {
+  .today-progress,
+  .content-policy-notice,
+  .content-policy-glow,
+  .content-policy-icon {
     animation: none;
   }
 

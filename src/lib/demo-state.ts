@@ -274,6 +274,15 @@ export function demoMyQuestions(state: DemoState): MyQuestionItem[] {
     }));
 }
 
+export function deleteDemoSuggestion(state: DemoState, suggestionId: string): DemoMutation<null> {
+  if (!(state.suggestions ?? []).some((item) => item.id === suggestionId)) {
+    return { ok: false, code: "not_found" };
+  }
+  const next = clone(state);
+  next.suggestions = next.suggestions.filter((item) => item.id !== suggestionId);
+  return { ok: true, state: next, value: null };
+}
+
 export function demoMyComments(
   state: DemoState,
   titles: Map<string, string>,

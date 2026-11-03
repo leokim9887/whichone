@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 
+import { ContentPolicyNotice } from "@/components/content-policy-notice";
 import { HomeBrowser } from "@/components/home-browser";
 import { SuggestCta } from "@/components/suggest-cta";
 import { TodayCarousel } from "@/components/today-carousel";
@@ -33,6 +34,8 @@ export function HomeView({
           가벼운 질문에 내 선택을 남기고, 전체 비율과 다른 사람의 이유를 확인해 보세요.
         </p>
       </section>
+
+      <ContentPolicyNotice />
 
       {data.error ? (
         <div className="rounded-3xl border border-danger/20 bg-card px-5 py-4 text-sm leading-6 text-danger" role="alert">

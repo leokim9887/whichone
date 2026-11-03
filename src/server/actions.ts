@@ -500,6 +500,67 @@ export async function toggleCommentLikeAction(
   }
 }
 
+export async function deleteMyQuestionAction(
+  id: string,
+  source: "question" | "suggestion",
+): Promise<FormActionResult> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  if (!isUuid(id)) {
+    return failure("invalid");
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const rpcName = source === "suggestion" ? "delete_my_pending_suggestion" : "delete_my_question";
+    const { data, error } = await auth.supabase.rpc(rpcName, { p_id: id });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    return { ok: true, message: "" };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
+export async function deleteMyCommentAction(questionId: string, commentId: string): Promise<FormActionResult> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  if (!isUuid(questionId) || !isUuid(commentId)) {
+    return failure("invalid");
+  }
+
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return failure(auth.errorCode);
+    }
+    const { data, error } = await auth.supabase.rpc("delete_own_comment", {
+      p_question_id: questionId,
+      p_comment_id: commentId,
+    });
+    if (error) {
+      return failure("unavailable");
+    }
+    const result = parseActionResult(data);
+    if (!result.ok) {
+      return failure(result.code);
+    }
+    return { ok: true, message: "" };
+  } catch {
+    return failure("unavailable");
+  }
+}
+
 export async function submitSuggestionAction(input: {
   title: string;
   description: string;
