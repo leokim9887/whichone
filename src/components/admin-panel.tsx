@@ -49,7 +49,7 @@ export function AdminLogin() {
     >
       <h1 className="text-2xl font-bold">운영자 로그인</h1>
       <p className="text-sm leading-6 text-muted">
-        관리자 이메일 계정으로만 들어갈 수 있습니다. 주소만 알아서는 제안 승인이나 숨김 처리를 할 수 없습니다.
+        관리자 이메일 계정으로만 들어갈 수 있습니다. 주소만 알아서는 질문 관리나 숨김 처리를 할 수 없습니다.
       </p>
       <label className="block text-sm font-semibold">
         이메일

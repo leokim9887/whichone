@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 
 import { useProfile } from "@/components/profile-provider";
 import { categoryLabel } from "@/lib/categories";
@@ -14,6 +15,7 @@ import { validateSuggestion } from "@/lib/validation";
 import { submitSuggestionAction, type FieldErrors } from "@/server/actions";
 
 export function SuggestForm({ mode }: { mode: DataMode }) {
+  const router = useRouter();
   const { ensureProfile, openSetup } = useProfile();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -52,12 +54,8 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
         return;
       }
       writeDemoState(result.state);
-      setMessage("질문을 이 브라우저에 저장했습니다. 데모에서는 공유 목록에 바로 나타나지 않습니다.");
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      setTopic("");
-      setOptions(["", ""]);
+      router.replace("/");
+      router.refresh();
       return;
     }
 
@@ -78,13 +76,8 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       setMessage(result.message);
       return;
     }
-    setMessage(result.message);
-    setTitle("");
-    setDescription("");
-    setCategory("");
-    setTopic("");
-    setOptions(["", ""]);
-    return;
+    router.replace("/");
+    router.refresh();
   }
 
   function chooseCategory(next: string) {
@@ -133,7 +126,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
       {topicChoices.length > 0 ? (
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold">세부 주제</legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2">
             {topicChoices.map((item) => {
               const active = topic === item.id;
               return (
@@ -142,7 +135,7 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
                   type="button"
                   aria-pressed={active}
                   onClick={() => chooseTopic(item)}
-                  className={`inline-flex min-h-11 items-center rounded-2xl border px-4 text-sm font-semibold ${
+                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold ${
                     active ? "border-foreground bg-foreground text-card" : "border-line bg-background"
                   }`}
                 >

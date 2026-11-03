@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "질문 작성",
-  description: "새로운 질문을 바로 공개합니다.",
+  description: "새로운 질문을 작성하고 바로 공개합니다.",
 };
 
 export default function Page() {
