@@ -275,12 +275,12 @@ export function CommentThread({
   }
 
   return (
-    <ul className="mt-2 divide-y divide-line">
+    <ul className="mt-2 divide-y divide-line overflow-visible">
       {comments.map((comment) => (
         <li
           key={comment.id}
           id={`comment-${comment.id}`}
-          className={`scroll-mt-24 py-4 ${focusCommentId === comment.id ? "comment-focus rounded-2xl px-2" : ""}`}
+          className={`scroll-mt-24 overflow-visible py-4 ${focusCommentId === comment.id ? "comment-focus rounded-2xl px-2" : ""}`}
         >
           {editingId === comment.id ? (
             <EditForm
@@ -331,12 +331,12 @@ export function CommentThread({
             />
           ) : null}
           {comment.replies.length > 0 ? (
-            <ul className="mt-1 divide-y divide-line/80 border-l border-line ml-5 pl-4 sm:ml-10">
+            <ul className="mt-1 ml-5 divide-y divide-line/80 overflow-visible border-l border-line pl-4 sm:ml-10">
               {comment.replies.map((reply) => (
                 <li
                   key={reply.id}
                   id={`comment-${reply.id}`}
-                  className={`scroll-mt-24 py-4 ${focusCommentId === reply.id ? "comment-focus rounded-2xl px-2" : ""}`}
+                  className={`scroll-mt-24 overflow-visible py-4 ${focusCommentId === reply.id ? "comment-focus rounded-2xl px-2" : ""}`}
                 >
                   {editingId === reply.id ? (
                     <EditForm
@@ -464,71 +464,77 @@ function CafeCommentRow({
   const likeLabel = item.likeCount > 0 ? `추천 ${item.likeCount}` : "추천";
 
   return (
-    <div className="flex gap-3">
-      <ProfileAvatar profile={{ nickname: item.nickname, avatarUrl: item.avatarUrl }} size="sm" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <p className="text-sm font-bold text-foreground">{item.nickname}</p>
-              {item.mine ? (
-                <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-strong">
-                  나
-                </span>
-              ) : null}
-              {optionLabel ? <span className="text-[11px] text-muted">{optionLabel}</span> : null}
-            </div>
-            <p className="mt-1 whitespace-pre-wrap text-[15px] leading-6 text-foreground">{item.body}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-              <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>
-              {canReply ? (
-                <button
-                  type="button"
-                  onClick={onToggleReply}
-                  aria-expanded={replyOpen}
-                  className={`font-semibold ${replyOpen ? "text-foreground" : "hover:text-foreground"}`}
-                >
-                  답글쓰기
-                </button>
-              ) : null}
-            </div>
-            {likeError ? (
-              <p className="mt-1 text-sm text-danger" role="alert">
-                {likeError}
-              </p>
-            ) : null}
-            {actionError ? (
-              <p className="mt-1 text-sm text-danger" role="alert">
-                {actionError}
-              </p>
-            ) : null}
-          </div>
-          <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
-            <CommentMoreMenu
-              pending={pending}
-              mine={item.mine}
-              mode={mode}
-              demo={demo}
-              onDemoState={onDemoState}
-              commentId={item.id}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+    <div className="grid grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-start gap-x-3">
+      <div className="pt-0.5">
+        <ProfileAvatar profile={{ nickname: item.nickname, avatarUrl: item.avatarUrl }} size="sm" />
+      </div>
+
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="truncate text-sm font-bold text-foreground">{item.nickname}</p>
+          {item.mine ? (
+            <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-strong">
+              나
+            </span>
+          ) : null}
+          {optionLabel ? (
+            <span className="min-w-0 truncate text-[11px] text-muted">{optionLabel}</span>
+          ) : null}
+        </div>
+        <p className="mt-1 break-words whitespace-pre-wrap text-[15px] leading-6 text-foreground [overflow-wrap:anywhere]">
+          {item.body}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+          <time dateTime={item.createdAt} className="shrink-0">
+            {formatDateTime(item.createdAt)}
+          </time>
+          {canReply ? (
             <button
               type="button"
-              onClick={onLike}
-              disabled={pending}
-              aria-pressed={item.likedByMe}
-              aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
-              className={`inline-flex min-h-9 min-w-9 flex-col items-center justify-center rounded-full disabled:opacity-50 ${
-                item.likedByMe ? "text-danger" : "text-muted hover:text-foreground"
-              }`}
+              onClick={onToggleReply}
+              aria-expanded={replyOpen}
+              className={`shrink-0 font-semibold ${replyOpen ? "text-foreground" : "hover:text-foreground"}`}
             >
-              <Heart className={`h-4 w-4 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
-              <span className="text-[11px] font-semibold leading-none tabular-nums">{item.likeCount}</span>
+              답글쓰기
             </button>
-          </div>
+          ) : null}
         </div>
+        {likeError ? (
+          <p className="mt-1 text-sm text-danger" role="alert">
+            {likeError}
+          </p>
+        ) : null}
+        {actionError ? (
+          <p className="mt-1 text-sm text-danger" role="alert">
+            {actionError}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex w-10 shrink-0 flex-col items-center gap-0.5">
+        <CommentMoreMenu
+          pending={pending}
+          mine={item.mine}
+          mode={mode}
+          demo={demo}
+          onDemoState={onDemoState}
+          commentId={item.id}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+        <button
+          type="button"
+          onClick={onLike}
+          disabled={pending}
+          aria-pressed={item.likedByMe}
+          aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
+          className={`inline-flex h-9 w-9 flex-col items-center justify-center rounded-full disabled:opacity-50 ${
+            item.likedByMe ? "text-danger" : "text-muted hover:text-foreground"
+          }`}
+        >
+          <Heart className={`h-4 w-4 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
+          <span className="mt-0.5 text-[11px] font-semibold leading-none tabular-nums">{item.likeCount}</span>
+        </button>
       </div>
     </div>
   );
@@ -583,7 +589,7 @@ function CommentMoreMenu({
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative z-10">
       <button
         type="button"
         aria-label="더보기"
@@ -596,7 +602,7 @@ function CommentMoreMenu({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-1 min-w-28 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
+          className="absolute right-0 z-30 mt-1 min-w-28 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
         >
           {mine ? (
             <>

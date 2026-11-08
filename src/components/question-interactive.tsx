@@ -267,7 +267,7 @@ export function QuestionInteractive({
       ) : null}
 
       {participation.voted ? (
-        <section className="rise-in space-y-4 rounded-[1.75rem] border border-line bg-card p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5">
+        <section className="rise-in space-y-4 overflow-visible rounded-[1.75rem] border border-line bg-card p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5">
           <div>
             <h2 className="text-lg font-bold">댓글 달기</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
