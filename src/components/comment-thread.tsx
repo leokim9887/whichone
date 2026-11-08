@@ -60,7 +60,7 @@ export function CommentThread({
   const [editBody, setEditBody] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
-  const { ensureProfile, openSetup } = useProfile();
+  const { ensureProfile, openSetup, profile } = useProfile();
   const likesInFlight = useRef(new Set<string>());
   const replyLock = useRef(false);
   const editLock = useRef(false);

@@ -4,8 +4,6 @@ import { Suspense } from "react";
 import { MyCommentsView } from "@/components/my-comments-view";
 import { loadMyComments } from "@/lib/data";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "내가 쓴 댓글",
   description: "내가 남긴 댓글과 답글을 확인합니다.",

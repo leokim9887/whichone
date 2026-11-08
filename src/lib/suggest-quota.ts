@@ -35,7 +35,7 @@ export function getCachedWriteAllowed(): boolean | null {
   return cache.allowed;
 }
 
-export function setCachedWriteQuota(allowed: boolean, used = 0, limit = LIMITS.suggestionsPerDay): void {
+export function setCachedWriteQuota(allowed: boolean, used = 0, limit: number = LIMITS.suggestionsPerDay): void {
   cache = { allowed, used, limit, at: Date.now() };
 }
 
