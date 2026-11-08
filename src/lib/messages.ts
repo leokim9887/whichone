@@ -17,6 +17,9 @@ const MESSAGES: Record<string, string> = {
   vote_required: "투표한 뒤에 이유를 남길 수 있습니다.",
   profile_required: "닉네임을 먼저 설정해 주세요.",
   nickname_taken: "이미 사용 중인 닉네임입니다. 다른 이름을 골라 주세요.",
+  duplicate_title: "같은 제목의 질문이 이미 있어요. 표현을 조금 바꿔 주세요.",
+  duplicate_description: "같은 내용의 질문이 이미 있어요. 설명을 다르게 적어 주세요.",
+  duplicate: "이미 올라간 질문과 겹쳐요. 제목이나 내용을 바꿔 주세요.",
 };
 
 export function messageForCode(code: string): string {

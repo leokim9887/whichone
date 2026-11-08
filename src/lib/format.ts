@@ -14,6 +14,21 @@ export function formatVoteCount(count: number): string {
   return `${new Intl.NumberFormat("ko-KR").format(count)}표`;
 }
 
+export function formatDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}.${value("month")}.${value("day")}`;
+}
+
 export function formatDateTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
@@ -36,6 +51,6 @@ export function formatRegisteredDate(iso: string | null | undefined): string {
   if (!iso) {
     return "";
   }
-  const formatted = formatDateTime(iso);
+  const formatted = formatDate(iso);
   return formatted ? `등록 ${formatted}` : "";
 }

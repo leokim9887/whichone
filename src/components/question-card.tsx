@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { QuestionImageGallery } from "@/components/question-images";
 import { VoteHint } from "@/components/vote-hint";
 import { formatQuestionStats, formatRegisteredDate } from "@/lib/format";
 import { categoryTopicLabel } from "@/lib/topics";
@@ -18,6 +19,7 @@ export function QuestionCard({
 
   return (
     <article className="flex h-full flex-col rounded-3xl border border-line bg-card p-5 shadow-[0_1px_0_rgba(28,25,23,0.03)]">
+      <QuestionImageGallery urls={question.imageUrls} alt={question.title} size="card" />
       <p className="text-xs font-semibold tracking-wide text-accent">
         {categoryTopicLabel(question.category, question.topic)}
       </p>

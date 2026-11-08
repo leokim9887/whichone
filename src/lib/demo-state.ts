@@ -1,6 +1,8 @@
 import { koreaDateKey } from "@/lib/daily";
 import { LIMITS } from "@/lib/limits";
+import { getSeedQuestions } from "@/lib/seed-questions";
 import type { Category, MyCommentItem, MyQuestionItem, PublicComment, SuggestionDraft } from "@/lib/types";
+import { normalizeComparableText } from "@/lib/validation";
 
 export type DemoVote = {
   optionId: string;
@@ -354,6 +356,30 @@ export function demoPublicComments(state: DemoState, questionId: string): Public
     }));
 }
 
+export function checkDemoQuestionDuplicate(
+  state: DemoState,
+  title: string,
+  description: string,
+): { titleTaken: boolean; descriptionTaken: boolean } {
+  const titleKey = normalizeComparableText(title);
+  const descriptionKey = normalizeComparableText(description);
+  const seeds = getSeedQuestions();
+  const titleTaken =
+    Boolean(titleKey) &&
+    (seeds.some((question) => normalizeComparableText(question.title) === titleKey) ||
+      state.suggestions.some((item) => normalizeComparableText(item.title) === titleKey));
+  const descriptionTaken =
+    Boolean(descriptionKey) &&
+    (seeds.some(
+      (question) =>
+        question.description !== null && normalizeComparableText(question.description) === descriptionKey,
+    ) ||
+      state.suggestions.some(
+        (item) => item.description && normalizeComparableText(item.description) === descriptionKey,
+      ));
+  return { titleTaken, descriptionTaken };
+}
+
 export function addDemoSuggestion(
   state: DemoState,
   draft: SuggestionDraft,
@@ -367,9 +393,18 @@ export function addDemoSuggestion(
     return { ok: false, code: "rate_limited" };
   }
 
+  const duplicate = checkDemoQuestionDuplicate(state, draft.title, draft.description);
+  if (duplicate.titleTaken) {
+    return { ok: false, code: "duplicate_title" };
+  }
+  if (duplicate.descriptionTaken) {
+    return { ok: false, code: "duplicate_description" };
+  }
+
   const suggestion: DemoSuggestion = {
     ...draft,
     description: draft.description,
+    imageUrls: draft.imageUrls ?? [],
     id: `demo-suggestion-${state.suggestions.length + 1}`,
     status: "pending",
     createdAt: now,

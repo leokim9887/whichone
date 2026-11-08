@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { CommentThread } from "@/components/comment-thread";
 import { useProfile } from "@/components/profile-provider";
+import { QuestionImageGallery } from "@/components/question-images";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
 import { ShareActions } from "@/components/share-actions";
@@ -181,13 +182,16 @@ export function QuestionInteractive({
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
-        <h1 className="mt-2 text-2xl font-bold leading-snug break-keep sm:text-3xl">{question.title}</h1>
-        {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
-        <p className="mt-3 text-sm text-muted">
-          {registeredLabel ? `${registeredLabel} · ${participantLabel}` : participantLabel}
-        </p>
+      <header className="space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
+          <h1 className="mt-2 text-2xl font-bold leading-snug break-keep sm:text-3xl">{question.title}</h1>
+          {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
+          <p className="mt-3 text-sm text-muted">
+            {registeredLabel ? `${registeredLabel} · ${participantLabel}` : participantLabel}
+          </p>
+        </div>
+        <QuestionImageGallery urls={question.imageUrls} alt={question.title} size="detail" />
       </header>
 
       {mode === "demo" ? (

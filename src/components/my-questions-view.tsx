@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { deleteDemoSuggestion, demoMyQuestions } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
-import { formatDateTime, formatQuestionStats } from "@/lib/format";
+import { formatQuestionStats, formatRegisteredDate } from "@/lib/format";
 import { messageForCode } from "@/lib/messages";
 import { listMyQuestionsLive } from "@/lib/my-content-live";
 import { deleteMyQuestionLive } from "@/lib/question-live";
@@ -191,7 +191,7 @@ function QuestionBody({ item, canOpen }: { item: MyQuestionItem; canOpen: boolea
       <p className="mt-2 text-sm text-muted">
         {canOpen ? formatQuestionStats(item.participantCount, item.commentCount) : null}
         {canOpen ? " · " : null}
-        등록 {formatDateTime(item.publishedAt || item.createdAt)}
+        {formatRegisteredDate(item.publishedAt || item.createdAt)}
       </p>
     </>
   );

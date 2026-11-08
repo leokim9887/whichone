@@ -40,6 +40,7 @@ function makeQuestion(
     commentCount: 0,
     authorNickname: null,
     authorAvatarUrl: null,
+    imageUrls: [],
     options: makeOptions(optionTexts),
   };
 }

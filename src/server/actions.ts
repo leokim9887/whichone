@@ -17,6 +17,7 @@ import {
   validateAvatarFile,
   validateComment,
   validateNickname,
+  validateQuestionImages,
   validateReport,
   validateSuggestion,
 } from "@/lib/validation";
@@ -595,19 +596,69 @@ export async function deleteMyCommentAction(questionId: string, commentId: strin
   }
 }
 
-export async function submitSuggestionAction(input: {
-  title: string;
-  description: string;
-  category: string;
-  topic: string;
-  options: string[];
-  company: string;
-}): Promise<FormActionResult> {
-  const validated = validateSuggestion(input);
+export async function checkQuestionDuplicateAction(
+  title: string,
+  description: string,
+): Promise<
+  | { ok: true; titleTaken: boolean; descriptionTaken: boolean }
+  | { ok: false; code: string; message: string }
+> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, code: "demo", message: "" };
+  }
+  try {
+    const auth = await withUser();
+    if (auth.errorCode) {
+      return { ok: false, code: auth.errorCode, message: messageForCode(auth.errorCode) };
+    }
+    const { data, error } = await auth.supabase.rpc("check_question_duplicate", {
+      p_title: title,
+      p_description: description,
+    });
+    if (error) {
+      return { ok: false, code: "unavailable", message: messageForCode("unavailable") };
+    }
+    if (!data || typeof data !== "object") {
+      return { ok: false, code: "unavailable", message: messageForCode("unavailable") };
+    }
+    const record = data as Record<string, unknown>;
+    if (record.ok === false) {
+      const code = typeof record.code === "string" ? record.code : "unavailable";
+      return { ok: false, code, message: messageForCode(code) };
+    }
+    return {
+      ok: true,
+      titleTaken: Boolean(record.titleTaken),
+      descriptionTaken: Boolean(record.descriptionTaken),
+    };
+  } catch {
+    return { ok: false, code: "unavailable", message: messageForCode("unavailable") };
+  }
+}
+
+export async function submitSuggestionAction(formData: FormData): Promise<FormActionResult> {
+  const title = String(formData.get("title") ?? "");
+  const description = String(formData.get("description") ?? "");
+  const category = String(formData.get("category") ?? "");
+  const topic = String(formData.get("topic") ?? "");
+  const company = String(formData.get("company") ?? "");
+  const options = formData
+    .getAll("options")
+    .map((item) => String(item))
+    .filter((item) => item.length > 0);
+  const imageFiles = formData
+    .getAll("images")
+    .filter((item): item is File => item instanceof File && item.size > 0);
+
+  const validated = validateSuggestion({ title, description, category, topic, options });
   if (!validated.ok) {
     return { ok: false, code: "invalid", message: validated.message, errors: validated.errors };
   }
-  if (input.company.trim()) {
+  const imagesCheck = validateQuestionImages(imageFiles);
+  if (!imagesCheck.ok) {
+    return { ok: false, code: "invalid", message: imagesCheck.message, errors: imagesCheck.errors };
+  }
+  if (company.trim()) {
     return {
       ok: true,
       message: "질문을 공개했습니다.",
@@ -622,12 +673,34 @@ export async function submitSuggestionAction(input: {
     if (auth.errorCode) {
       return failure(auth.errorCode);
     }
+    const user = (await auth.supabase.auth.getUser()).data.user;
+    if (!user) {
+      return failure("auth_required");
+    }
+
+    const uploadedUrls: string[] = [];
+    for (const file of imagesCheck.value.files) {
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const uploaded = await auth.supabase.storage.from("question-images").upload(path, bytes, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (uploaded.error) {
+        return failure("unavailable", { images: "사진을 올리지 못했어요. 잠시 후 다시 시도해 주세요." });
+      }
+      const publicUrl = auth.supabase.storage.from("question-images").getPublicUrl(path).data.publicUrl;
+      uploadedUrls.push(`${publicUrl}?v=${Date.now()}`);
+    }
+
     const { data, error } = await auth.supabase.rpc("submit_suggestion", {
       p_title: validated.value.title,
       p_description: validated.value.description,
       p_category: validated.value.category,
       p_topic: validated.value.topic,
       p_options: validated.value.options,
+      p_image_urls: uploadedUrls,
     });
     if (error) {
       return failure("unavailable");

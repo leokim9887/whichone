@@ -7,6 +7,8 @@ export const LIMITS = {
   nicknameMin: 2,
   nicknameMax: 16,
   avatarBytes: 2 * 1024 * 1024,
+  questionImageBytes: 2 * 1024 * 1024,
+  maxQuestionImages: 3,
   minOptions: 2,
   maxOptions: 4,
   suggestionsPerDay: 3,
@@ -16,3 +18,4 @@ export const LIMITS = {
 export const NICKNAME_PATTERN = /^[가-힣a-zA-Z0-9_]+$/;
 
 export const AVATAR_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const QUESTION_IMAGE_MIME_TYPES = AVATAR_MIME_TYPES;

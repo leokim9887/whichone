@@ -72,6 +72,8 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     throw new Error("invalid options");
   }
 
+  const imageUrls = parseImageUrls(value.imageUrls);
+
   return {
     id,
     title,
@@ -85,8 +87,29 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     commentCount,
     authorNickname: null,
     authorAvatarUrl: null,
+    imageUrls,
     options,
   };
+}
+
+function parseImageUrls(value: unknown): string[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("invalid imageUrls");
+  }
+  const urls: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string" || !item.startsWith("http") || item.length > 500) {
+      throw new Error("invalid imageUrls");
+    }
+    urls.push(item);
+  }
+  if (urls.length > 3) {
+    throw new Error("invalid imageUrls");
+  }
+  return urls;
 }
 
 function asTopic(value: unknown): string | null {

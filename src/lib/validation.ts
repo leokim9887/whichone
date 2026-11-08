@@ -1,5 +1,5 @@
 import { isCategory } from "@/lib/categories";
-import { AVATAR_MIME_TYPES, LIMITS, NICKNAME_PATTERN } from "@/lib/limits";
+import { AVATAR_MIME_TYPES, LIMITS, NICKNAME_PATTERN, QUESTION_IMAGE_MIME_TYPES } from "@/lib/limits";
 import { normalizeLine } from "@/lib/text";
 import { topicBelongsTo } from "@/lib/topics";
 import {
@@ -123,6 +123,31 @@ export function validateAvatarFile(
     });
   }
   return { ok: true, value: { file } };
+}
+
+export function validateQuestionImages(files: File[]): ValidationResult<{ files: File[] }> {
+  if (files.length > LIMITS.maxQuestionImages) {
+    return fail(`사진은 최대 ${LIMITS.maxQuestionImages}장까지 넣을 수 있어요.`, {
+      images: `사진은 최대 ${LIMITS.maxQuestionImages}장까지 넣을 수 있어요.`,
+    });
+  }
+  for (const file of files) {
+    if (!(QUESTION_IMAGE_MIME_TYPES as readonly string[]).includes(file.type)) {
+      return fail("사진은 JPG, PNG, WEBP만 올릴 수 있어요.", {
+        images: "사진은 JPG, PNG, WEBP만 올릴 수 있어요.",
+      });
+    }
+    if (file.size > LIMITS.questionImageBytes) {
+      return fail("각 사진은 2MB 이하로 올려 주세요.", {
+        images: "각 사진은 2MB 이하로 올려 주세요.",
+      });
+    }
+  }
+  return { ok: true, value: { files } };
+}
+
+export function normalizeComparableText(value: string): string {
+  return normalizeLine(value).toLowerCase();
 }
 
 export function clampNicknameInput(value: string): string {
