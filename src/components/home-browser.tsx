@@ -8,7 +8,6 @@ import { QuestionCard } from "@/components/question-card";
 import { CATEGORY_LABEL, isCategoryFilter, type CategoryFilter } from "@/lib/categories";
 import { filterQuestions, sortQuestions, type QuestionSort } from "@/lib/catalog";
 import { LIMITS } from "@/lib/limits";
-import { topicBelongsTo, topicsFor } from "@/lib/topics";
 import { CATEGORIES, type Category, type DataMode, type Question } from "@/lib/types";
 
 const CATEGORY_IMAGE: Record<Category, string> = {
@@ -22,7 +21,7 @@ const CATEGORY_IMAGE: Record<Category, string> = {
 };
 
 const CATEGORY_IMAGE_POSITION: Partial<Record<Category, string>> = {
-  sports: "object-[center_42%]",
+  sports: "object-center",
 };
 
 export function HomeBrowser({
@@ -30,18 +29,15 @@ export function HomeBrowser({
   votedIds,
   mode,
   initialCategory,
-  initialTopic,
   initialQuery,
 }: {
   questions: Question[];
   votedIds: string[];
   mode: DataMode;
   initialCategory: CategoryFilter;
-  initialTopic: string;
   initialQuery: string;
 }) {
   const [category, setCategory] = useState(initialCategory);
-  const [topic, setTopic] = useState(initialTopic);
   const [query, setQuery] = useState(initialQuery);
   const [draftQuery, setDraftQuery] = useState(initialQuery);
   const [sort, setSort] = useState<QuestionSort>("popular");
@@ -55,17 +51,16 @@ export function HomeBrowser({
     return tally;
   }, [questions]);
   const filtered = useMemo(
-    () => filterQuestions(questions, category, topic, query),
-    [questions, category, topic, query],
+    () => filterQuestions(questions, category, query),
+    [questions, category, query],
   );
   const sorted = useMemo(() => sortQuestions(filtered, sort), [filtered, sort]);
-  const browsingTopics = category === "all" && query.trim().length === 0;
+  const browsingCategories = category === "all" && query.trim().length === 0;
 
   useEffect(() => {
     function onPopState() {
       const next = readFilters(window.location.search);
       setCategory(next.category);
-      setTopic(next.topic);
       setQuery(next.query);
       setDraftQuery(next.query);
     }
@@ -75,13 +70,7 @@ export function HomeBrowser({
 
   function chooseCategory(next: CategoryFilter) {
     setCategory(next);
-    setTopic("");
-    writeFilters(next, "", query, true);
-  }
-
-  function chooseTopic(next: string) {
-    setTopic(next);
-    writeFilters(category, next, query, true);
+    writeFilters(next, query, true);
   }
 
   function applySearch(raw: string) {
@@ -90,7 +79,7 @@ export function HomeBrowser({
     setDraftQuery(value);
     startTransition(() => {
       setQuery(applied);
-      writeFilters(category, topic, applied, false);
+      writeFilters(category, applied, false);
     });
   }
 
@@ -98,7 +87,7 @@ export function HomeBrowser({
     setDraftQuery("");
     startTransition(() => {
       setQuery("");
-      writeFilters(category, topic, "", false);
+      writeFilters(category, "", false);
     });
   }
 
@@ -148,7 +137,7 @@ export function HomeBrowser({
         </form>
       </div>
 
-      {browsingTopics ? (
+      {browsingCategories ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {CATEGORIES.map((item, index) => (
             <CategoryCard
@@ -184,22 +173,6 @@ export function HomeBrowser({
             </div>
             {filtered.length > 0 ? <SortSwitch sort={sort} onChange={setSort} /> : null}
           </div>
-
-          {category !== "all" ? (
-            <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="chip-scroll">
-                <TopicChip active={!topic} label="이 주제 전체" onClick={() => chooseTopic("")} />
-                {topicsFor(category).map((item) => (
-                  <TopicChip
-                    key={item.id}
-                    active={topic === item.id}
-                    label={item.label}
-                    onClick={() => chooseTopic(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
 
           {sorted.showingRecentBecauseNoVotes ? (
             <p className="text-sm text-muted">아직 공유된 참여가 없어 최근 질문 순으로 보여 드립니다.</p>
@@ -303,38 +276,18 @@ function SortButton({ active, label, onClick }: { active: boolean; label: string
   );
 }
 
-function TopicChip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-current={active ? "page" : undefined}
-      className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition duration-300 hover:-translate-y-0.5 ${
-        active ? "bg-foreground text-card shadow-[0_8px_18px_rgba(28,25,23,0.16)]" : "border border-line bg-card text-foreground"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function readFilters(search: string): { category: CategoryFilter; topic: string; query: string } {
+function readFilters(search: string): { category: CategoryFilter; query: string } {
   const params = new URLSearchParams(search);
   const rawCategory = params.get("category") ?? "";
   const category = isCategoryFilter(rawCategory) ? rawCategory : "all";
-  const rawTopic = params.get("topic") ?? "";
-  const topic = category !== "all" && topicBelongsTo(rawTopic, category) ? rawTopic : "";
   const query = (params.get("q") ?? "").trim().slice(0, LIMITS.search);
-  return { category, topic, query };
+  return { category, query };
 }
 
-function writeFilters(category: CategoryFilter, topic: string, query: string, push: boolean) {
+function writeFilters(category: CategoryFilter, query: string, push: boolean) {
   const params = new URLSearchParams();
   if (category !== "all") {
     params.set("category", category);
-  }
-  if (category !== "all" && topic) {
-    params.set("topic", topic);
   }
   const trimmed = query.trim();
   if (trimmed) {

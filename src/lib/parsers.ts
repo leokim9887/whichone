@@ -1,5 +1,4 @@
 import { isCategory } from "@/lib/categories";
-import { isTopic } from "@/lib/topics";
 import type {
   Category,
   CommentStatus,
@@ -90,10 +89,14 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
 }
 
 function asTopic(value: unknown): string | null {
-  if (typeof value !== "string" || !isTopic(value)) {
+  if (value === null || value === undefined) {
     return null;
   }
-  return value;
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function parseOption(value: unknown): Option {

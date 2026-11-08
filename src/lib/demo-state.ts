@@ -268,7 +268,7 @@ export function demoMyQuestions(state: DemoState): MyQuestionItem[] {
       status: suggestion.status,
       source: "suggestion" as const,
       category: suggestion.category,
-      topic: suggestion.topic,
+      topic: null,
       publishedAt: null,
       createdAt: suggestion.createdAt,
       participantCount: 0,

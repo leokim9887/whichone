@@ -640,14 +640,13 @@ export async function submitSuggestionAction(formData: FormData): Promise<FormAc
   const title = String(formData.get("title") ?? "");
   const description = String(formData.get("description") ?? "");
   const category = String(formData.get("category") ?? "");
-  const topic = String(formData.get("topic") ?? "");
   const company = String(formData.get("company") ?? "");
   const options = formData
     .getAll("options")
     .map((item) => String(item))
     .filter((item) => item.length > 0);
 
-  const validated = validateSuggestion({ title, description, category, topic, options });
+  const validated = validateSuggestion({ title, description, category, options });
   if (!validated.ok) {
     return { ok: false, code: "invalid", message: validated.message, errors: validated.errors };
   }
@@ -712,7 +711,7 @@ export async function submitSuggestionAction(formData: FormData): Promise<FormAc
       p_title: validated.value.title,
       p_description: validated.value.description,
       p_category: validated.value.category,
-      p_topic: validated.value.topic,
+      p_topic: "",
       p_options: validated.value.options,
       p_option_images: uploadedUrls,
     });

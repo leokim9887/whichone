@@ -10,7 +10,7 @@ import { OptionImageThumb } from "@/components/question-images";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
 import { ShareActions } from "@/components/share-actions";
-import { categoryTopicLabel } from "@/lib/topics";
+import { categoryLabel } from "@/lib/categories";
 import { addDemoComment, castDemoVote, demoPublicComments } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatParticipantCount, formatRegisteredDate } from "@/lib/format";
@@ -185,7 +185,7 @@ export function QuestionInteractive({
     <div className="space-y-6">
       <header className="rise-in">
         <div className="surface-panel p-5 sm:p-6">
-          <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
+          <p className="text-sm font-semibold text-accent">{categoryLabel(question.category)}</p>
           <h1 className="mt-2 text-2xl font-bold leading-snug tracking-tight break-keep sm:text-3xl">{question.title}</h1>
           {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
           <p className="mt-3 text-sm text-muted">

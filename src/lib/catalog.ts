@@ -4,15 +4,11 @@ import type { Question } from "@/lib/types";
 export function filterQuestions(
   questions: readonly Question[],
   category: CategoryFilter,
-  topic: string,
   query: string,
 ): Question[] {
   const needle = query.trim().toLowerCase();
   return questions.filter((question) => {
     if (category !== "all" && question.category !== category) {
-      return false;
-    }
-    if (category !== "all" && topic && question.topic !== topic) {
       return false;
     }
     if (!needle) {

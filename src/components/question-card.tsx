@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { QuestionOptionImageStrip } from "@/components/question-images";
 import { VoteHint } from "@/components/vote-hint";
+import { categoryLabel } from "@/lib/categories";
 import { formatQuestionStats, formatRegisteredDate } from "@/lib/format";
-import { categoryTopicLabel } from "@/lib/topics";
 import type { DataMode, Question } from "@/lib/types";
 
 export function QuestionCard({
@@ -21,7 +21,7 @@ export function QuestionCard({
     <article className="hover-lift flex h-full flex-col rounded-[1.5rem] border border-line bg-card p-5 shadow-[0_1px_0_rgba(28,25,23,0.03)]">
       <QuestionOptionImageStrip options={question.options} />
       <p className="text-xs font-semibold tracking-wide text-accent">
-        {categoryTopicLabel(question.category, question.topic)}
+        {categoryLabel(question.category)}
       </p>
       <h3 className="mt-2 text-base font-bold leading-7 text-foreground break-keep sm:text-lg">{question.title}</h3>
       {registered ? <p className="mt-2 text-xs text-muted">{registered}</p> : null}

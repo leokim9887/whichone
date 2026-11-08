@@ -13,8 +13,7 @@ import { readDemoState, writeDemoState } from "@/lib/demo-storage";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
 import { canWriteQuestionToday, invalidateWriteQuotaCache, setCachedWriteQuota } from "@/lib/suggest-quota";
-import { topicsFor, type Topic } from "@/lib/topics";
-import { CATEGORIES, type Category, type DataMode } from "@/lib/types";
+import { CATEGORIES, type DataMode } from "@/lib/types";
 import { validateOptionImage, validateSuggestion } from "@/lib/validation";
 import {
   checkQuestionDuplicateAction,
@@ -61,7 +60,6 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [topic, setTopic] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [optionImages, setOptionImages] = useState<(ImageDraft | null)[]>([null, null]);
   const [company, setCompany] = useState("");
@@ -132,7 +130,6 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     setTitle("");
     setDescription("");
     setCategory("");
-    setTopic("");
     setOptions(["", ""]);
     setOptionImages([null, null]);
     setCompany("");
@@ -237,7 +234,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
   async function submit() {
     setMessage(null);
-    const validated = validateSuggestion({ title, description, category, topic, options });
+    const validated = validateSuggestion({ title, description, category, options });
     if (!validated.ok) {
       setErrors(validated.errors);
       return;
@@ -300,7 +297,6 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     formData.set("title", title);
     formData.set("description", description);
     formData.set("category", category);
-    formData.set("topic", topic);
     formData.set("company", company);
     validated.value.options.forEach((option, index) => {
       formData.append("options", option);
@@ -333,14 +329,8 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
   function chooseCategory(next: string) {
     setCategory(next);
-    setTopic("");
   }
 
-  function chooseTopic(next: Topic) {
-    setTopic(next.id);
-  }
-
-  const topicChoices = isCategoryValue(category) ? topicsFor(category) : [];
   const blocked = pending || dupTitle || dupDescription || dupChecking;
 
   return (
@@ -402,33 +392,6 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
             })}
           </div>
           {errors.category ? <p className="text-sm text-danger">{errors.category}</p> : null}
-
-          {topicChoices.length > 0 ? (
-            <div className="space-y-2 pt-1">
-              <p className="text-sm font-semibold text-muted">세부 주제</p>
-              <div className="flex flex-wrap gap-2">
-                {topicChoices.map((item) => {
-                  const active = topic === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => chooseTopic(item)}
-                      className={`inline-flex min-h-10 items-center rounded-full px-3.5 text-sm font-semibold transition ${
-                        active
-                          ? "bg-accent text-white"
-                          : "border border-line bg-background text-foreground hover:border-accent/40"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.topic ? <p className="text-sm text-danger">{errors.topic}</p> : null}
-            </div>
-          ) : null}
         </section>
 
         <section className="space-y-3">
@@ -614,10 +577,6 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
 const inputClass =
   "mt-2 w-full rounded-2xl border border-line bg-background px-3.5 py-3 text-base outline-none transition placeholder:text-muted/70 focus:border-accent";
-
-function isCategoryValue(value: string): value is Category {
-  return CATEGORIES.some((item) => item === value);
-}
 
 function SectionLabel({ title, hint }: { title: string; hint: string }) {
   return (

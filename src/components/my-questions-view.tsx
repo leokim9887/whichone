@@ -12,7 +12,7 @@ import { messageForCode } from "@/lib/messages";
 import { listMyQuestionsLive } from "@/lib/my-content-live";
 import { deleteMyQuestionLive } from "@/lib/question-live";
 import { canWriteQuestionToday, invalidateWriteQuotaCache } from "@/lib/suggest-quota";
-import { categoryTopicLabel } from "@/lib/topics";
+import { categoryLabel } from "@/lib/categories";
 import type { DataMode, MyQuestionItem } from "@/lib/types";
 
 function statusLabel(item: MyQuestionItem): string {
@@ -190,7 +190,7 @@ function QuestionBody({ item, canOpen }: { item: MyQuestionItem; canOpen: boolea
   return (
     <>
       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-        <span className="text-accent">{categoryTopicLabel(item.category, item.topic)}</span>
+        <span className="text-accent">{categoryLabel(item.category)}</span>
         <span className="rounded-full bg-background px-2 py-0.5 text-muted">{statusLabel(item)}</span>
       </div>
       <h2 className="mt-2 text-lg font-bold leading-7">{item.title}</h2>

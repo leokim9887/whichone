@@ -135,7 +135,6 @@ export type SuggestionDraft = {
   title: string;
   description: string;
   category: Category;
-  topic: string;
   options: string[];
   optionImageUrls?: (string | null)[];
 };

@@ -4,21 +4,18 @@ import { ContentPolicyNotice } from "@/components/content-policy-notice";
 import { HomeBrowser } from "@/components/home-browser";
 import { SuggestCta } from "@/components/suggest-cta";
 import { TodayCarousel } from "@/components/today-carousel";
+import { categoryLabel, type CategoryFilter } from "@/lib/categories";
 import { formatKoreanDate } from "@/lib/daily";
 import { formatParticipantCount } from "@/lib/format";
-import { categoryTopicLabel } from "@/lib/topics";
 import type { HomeData } from "@/lib/data";
-import type { CategoryFilter } from "@/lib/categories";
 
 export function HomeView({
   data,
   category,
-  topic,
   query,
 }: {
   data: HomeData;
   category: CategoryFilter;
-  topic: string;
   query: string;
 }) {
   return (
@@ -74,7 +71,7 @@ export function HomeView({
             slides={data.today.map((question) => ({
               id: question.id,
               title: question.title,
-              category: categoryTopicLabel(question.category, question.topic),
+              category: categoryLabel(question.category),
               countLabel:
                 data.mode === "demo"
                   ? "데모에서는 공유 집계를 보여 주지 않습니다"
@@ -91,7 +88,6 @@ export function HomeView({
             votedIds={data.votedIds}
             mode={data.mode}
             initialCategory={category}
-            initialTopic={topic}
             initialQuery={query}
           />
         </div>
