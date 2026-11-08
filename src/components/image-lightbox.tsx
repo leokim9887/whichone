@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
+import { createPortal } from "react-dom";
 
 export function ImageLightbox({
   src,
@@ -12,6 +13,8 @@ export function ImageLightbox({
   alt: string;
   onClose: () => void;
 }) {
+  const titleId = useId();
+
   useEffect(() => {
     if (!src) {
       return;
@@ -30,33 +33,41 @@ export function ImageLightbox({
     };
   }, [src, onClose]);
 
-  if (!src) {
+  if (!src || typeof document === "undefined") {
     return null;
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-3 backdrop-blur-[2px] sm:p-6"
       role="dialog"
       aria-modal="true"
-      aria-label="사진 크게 보기"
+      aria-labelledby={titleId}
       onClick={onClose}
     >
+      <p id={titleId} className="sr-only">
+        {alt ? `${alt} 크게 보기` : "사진 크게 보기"}
+      </p>
       <button
         type="button"
         onClick={onClose}
-        className="pressable absolute right-4 top-[max(1rem,env(safe-area-inset-top))] inline-flex h-11 w-11 items-center justify-center rounded-full bg-card text-foreground shadow-lg"
+        className="pressable absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-foreground shadow-[0_10px_30px_rgba(0,0,0,0.28)]"
         aria-label="닫기"
       >
         <X className="h-5 w-5" aria-hidden="true" />
       </button>
       <div
-        className="menu-pop max-h-[min(88dvh,56rem)] w-full max-w-3xl overflow-hidden rounded-[1.5rem] bg-card shadow-[0_24px_60px_rgba(28,25,23,0.35)]"
+        className="flex max-h-[min(92dvh,56rem)] max-w-[min(96vw,56rem)] items-center justify-center"
         onClick={(event) => event.stopPropagation()}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded option photos */}
-        <img src={src} alt={alt} className="max-h-[min(88dvh,56rem)] w-full object-contain" />
+        <img
+          src={src}
+          alt={alt}
+          className="max-h-[min(92dvh,56rem)] max-w-[min(96vw,56rem)] rounded-2xl object-contain shadow-[0_24px_60px_rgba(0,0,0,0.45)]"
+        />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

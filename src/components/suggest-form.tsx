@@ -6,6 +6,7 @@ import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { useProfile } from "@/components/profile-provider";
+import { OptionImageThumb } from "@/components/question-images";
 import { categoryLabel } from "@/lib/categories";
 import { addDemoSuggestion, checkDemoQuestionDuplicate } from "@/lib/demo-state";
 import { readDemoState, writeDemoState } from "@/lib/demo-storage";
@@ -497,28 +498,45 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
                           {errors[`option-${index}`]}
                         </p>
                       ) : null}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-3">
                         {image ? (
-                          <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-line">
-                            {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
-                            <img src={image.previewUrl} alt="" className="h-full w-full object-cover" />
-                            <button
-                              type="button"
-                              aria-label={`선택지 ${index + 1} 사진 삭제`}
-                              onClick={() => clearOptionImage(index)}
-                              className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground/80 text-card"
-                            >
-                              <X className="h-3.5 w-3.5" aria-hidden="true" />
-                            </button>
-                          </div>
+                          <>
+                            <OptionImageThumb
+                              src={image.previewUrl}
+                              alt={`선택지 ${index + 1} 사진`}
+                              size="md"
+                            />
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <label
+                                  htmlFor={inputId}
+                                  className="pressable inline-flex min-h-10 cursor-pointer items-center rounded-full border border-line bg-card px-3 text-sm font-semibold hover:border-foreground/30"
+                                >
+                                  사진 바꾸기
+                                </label>
+                                <button
+                                  type="button"
+                                  aria-label={`선택지 ${index + 1} 사진 삭제`}
+                                  onClick={() => clearOptionImage(index)}
+                                  className="pressable inline-flex min-h-10 items-center rounded-full border border-line px-3 text-sm font-semibold text-muted hover:border-danger hover:text-danger"
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                              <p className="text-xs text-muted">탭하면 크게 볼 수 있어요 · 2MB 이하</p>
+                            </div>
+                          </>
                         ) : (
-                          <label
-                            htmlFor={inputId}
-                            className="pressable inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-line px-3 text-sm font-semibold text-muted hover:border-accent hover:text-accent"
-                          >
-                            <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                            사진 넣기
-                          </label>
+                          <>
+                            <label
+                              htmlFor={inputId}
+                              className="pressable inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-line px-3 text-sm font-semibold text-muted hover:border-accent hover:text-accent"
+                            >
+                              <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                              사진 넣기
+                            </label>
+                            <p className="text-xs text-muted">부가 설명용 · 2MB 이하</p>
+                          </>
                         )}
                         <input
                           id={inputId}
@@ -530,7 +548,6 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
                             event.target.value = "";
                           }}
                         />
-                        <p className="text-xs text-muted">부가 설명용 · 2MB 이하</p>
                       </div>
                       {errors[`optionImage-${index}`] ? (
                         <p className="text-sm text-danger" role="alert">
