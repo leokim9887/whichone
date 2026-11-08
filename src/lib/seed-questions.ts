@@ -14,7 +14,7 @@ function makeOptions(texts: string[]): Option[] {
   return texts.map((text, position) => {
     const id = optionId(optionSerial);
     optionSerial += 1;
-    return { id, text, position };
+    return { id, text, position, imageUrl: null };
   });
 }
 
@@ -40,7 +40,6 @@ function makeQuestion(
     commentCount: 0,
     authorNickname: null,
     authorAvatarUrl: null,
-    imageUrls: [],
     options: makeOptions(optionTexts),
   };
 }

@@ -26,7 +26,7 @@ async function SuggestScreen() {
       <PageHeader
         eyebrow="새 질문"
         title="궁금한 걸 물어보세요"
-        description="제목과 선택지만 있으면 충분해요. 사진이나 짧은 설명을 더하면 사람들이 더 쉽게 고를 수 있습니다."
+        description="제목과 선택지만 있으면 충분해요. 선택지에 사진을 넣으면 고르기가 더 직관적입니다."
       />
       <SuggestGate>
         {mode === "demo" ? (

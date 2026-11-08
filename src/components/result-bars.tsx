@@ -1,12 +1,17 @@
+"use client";
+
+import { OptionImageThumb } from "@/components/question-images";
 import { formatVoteCount } from "@/lib/format";
 import type { ResultSummary } from "@/lib/types";
 
 export function ResultBars({
   summary,
   scope,
+  imageByOptionId,
 }: {
   summary: ResultSummary;
   scope: "shared" | "browser";
+  imageByOptionId?: Map<string, string | null>;
 }) {
   const leaders = summary.options.filter((option) => option.isLeader);
 
@@ -29,32 +34,40 @@ export function ResultBars({
         <p className="text-sm text-muted">아직 집계된 표가 없습니다.</p>
       )}
       <ul className="space-y-3.5">
-        {summary.options.map((option, index) => (
-          <li key={option.optionId}>
-            <div className="mb-1.5 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-              <span className="min-w-0 font-semibold break-keep">
-                {option.text}
-                {option.isMine ? <span className="ml-2 text-accent">내 선택</span> : null}
-              </span>
-              <span className="shrink-0 text-muted">
-                {formatVoteCount(option.voteCount)} · {option.percentage}%
-              </span>
-            </div>
-            <div
-              className="h-3 overflow-hidden rounded-full bg-accent-soft"
-              role="img"
-              aria-label={`${option.text} ${option.percentage}%`}
-            >
-              <div
-                className={`bar-fill h-full rounded-full ${option.isMine ? "bg-accent" : "bg-foreground/70"}`}
-                style={{
-                  width: `${option.percentage}%`,
-                  animationDelay: `${Math.min(index, 6) * 70}ms`,
-                }}
-              />
-            </div>
-          </li>
-        ))}
+        {summary.options.map((option, index) => {
+          const imageUrl = imageByOptionId?.get(option.optionId) ?? null;
+          return (
+            <li key={option.optionId}>
+              <div className="mb-1.5 flex items-start gap-3">
+                {imageUrl ? <OptionImageThumb src={imageUrl} alt={option.text} size="sm" /> : null}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <span className="min-w-0 font-semibold break-keep">
+                      {option.text}
+                      {option.isMine ? <span className="ml-2 text-accent">내 선택</span> : null}
+                    </span>
+                    <span className="shrink-0 text-muted">
+                      {formatVoteCount(option.voteCount)} · {option.percentage}%
+                    </span>
+                  </div>
+                  <div
+                    className="mt-1.5 h-3 overflow-hidden rounded-full bg-accent-soft"
+                    role="img"
+                    aria-label={`${option.text} ${option.percentage}%`}
+                  >
+                    <div
+                      className={`bar-fill h-full rounded-full ${option.isMine ? "bg-accent" : "bg-foreground/70"}`}
+                      style={{
+                        width: `${option.percentage}%`,
+                        animationDelay: `${Math.min(index, 6) * 70}ms`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

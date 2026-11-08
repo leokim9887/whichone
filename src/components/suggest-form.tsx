@@ -14,7 +14,7 @@ import { messageForCode } from "@/lib/messages";
 import { canWriteQuestionToday, invalidateWriteQuotaCache, setCachedWriteQuota } from "@/lib/suggest-quota";
 import { topicsFor, type Topic } from "@/lib/topics";
 import { CATEGORIES, type Category, type DataMode } from "@/lib/types";
-import { validateQuestionImages, validateSuggestion } from "@/lib/validation";
+import { validateOptionImage, validateSuggestion } from "@/lib/validation";
 import {
   checkQuestionDuplicateAction,
   submitSuggestionAction,
@@ -55,14 +55,14 @@ export function SuggestForm({ mode }: { mode: DataMode }) {
 
 function SuggestFormFields({ mode }: { mode: DataMode }) {
   const router = useRouter();
-  const imageInputId = useId();
+  const baseId = useId();
   const { ensureProfile, openSetup } = useProfile();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [topic, setTopic] = useState("");
   const [options, setOptions] = useState(["", ""]);
-  const [images, setImages] = useState<ImageDraft[]>([]);
+  const [optionImages, setOptionImages] = useState<(ImageDraft | null)[]>([null, null]);
   const [company, setCompany] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
@@ -118,16 +118,22 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     };
   }, [title, description, mode]);
 
-  function resetForm() {
-    for (const item of images) {
+  function revokeImage(item: ImageDraft | null) {
+    if (item) {
       URL.revokeObjectURL(item.previewUrl);
+    }
+  }
+
+  function resetForm() {
+    for (const item of optionImages) {
+      revokeImage(item);
     }
     setTitle("");
     setDescription("");
     setCategory("");
     setTopic("");
     setOptions(["", ""]);
-    setImages([]);
+    setOptionImages([null, null]);
     setCompany("");
     setErrors({});
     setMessage(null);
@@ -138,6 +144,62 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
   function updateOption(index: number, value: string) {
     setOptions((current) => current.map((option, optionIndex) => (optionIndex === index ? value : option)));
+  }
+
+  function addOption() {
+    setOptions((current) => [...current, ""]);
+    setOptionImages((current) => [...current, null]);
+  }
+
+  function removeOption(index: number) {
+    setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index));
+    setOptionImages((current) => {
+      revokeImage(current[index] ?? null);
+      return current.filter((_, optionIndex) => optionIndex !== index);
+    });
+  }
+
+  function setOptionImage(index: number, fileList: FileList | null) {
+    const file = fileList?.[0] ?? null;
+    const checked = validateOptionImage(file);
+    if (!checked.ok) {
+      setErrors((current) => ({ ...current, [`optionImage-${index}`]: checked.errors.images ?? checked.message }));
+      return;
+    }
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[`optionImage-${index}`];
+      delete next.images;
+      return next;
+    });
+    setOptionImages((current) =>
+      current.map((item, optionIndex) => {
+        if (optionIndex !== index) {
+          return item;
+        }
+        revokeImage(item);
+        if (!checked.value.file) {
+          return null;
+        }
+        return {
+          id: `${checked.value.file.name}-${checked.value.file.size}-${crypto.randomUUID()}`,
+          file: checked.value.file,
+          previewUrl: URL.createObjectURL(checked.value.file),
+        };
+      }),
+    );
+  }
+
+  function clearOptionImage(index: number) {
+    setOptionImages((current) =>
+      current.map((item, optionIndex) => {
+        if (optionIndex !== index) {
+          return item;
+        }
+        revokeImage(item);
+        return null;
+      }),
+    );
   }
 
   function notifyRateLimited() {
@@ -163,52 +225,13 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     router.refresh();
   }
 
-  function addImages(fileList: FileList | null) {
-    if (!fileList || fileList.length === 0) {
-      return;
-    }
-    const incoming = Array.from(fileList);
-    const nextFiles = [...images.map((item) => item.file), ...incoming].slice(0, LIMITS.maxQuestionImages);
-    const checked = validateQuestionImages(nextFiles);
-    if (!checked.ok) {
-      setErrors((current) => ({ ...current, images: checked.errors.images }));
-      return;
-    }
-    setErrors((current) => {
-      const next = { ...current };
-      delete next.images;
-      return next;
+  async function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
     });
-    const added = nextFiles.slice(images.length).map((file) => ({
-      id: `${file.name}-${file.size}-${crypto.randomUUID()}`,
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-    setImages((current) => [...current, ...added].slice(0, LIMITS.maxQuestionImages));
-  }
-
-  function removeImage(id: string) {
-    setImages((current) => {
-      const target = current.find((item) => item.id === id);
-      if (target) {
-        URL.revokeObjectURL(target.previewUrl);
-      }
-      return current.filter((item) => item.id !== id);
-    });
-  }
-
-  async function filesToDataUrls(files: File[]): Promise<string[]> {
-    const urls: string[] = [];
-    for (const file of files) {
-      const url = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-      });
-      urls.push(url);
-    }
-    return urls;
   }
 
   async function submit() {
@@ -218,10 +241,15 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
       setErrors(validated.errors);
       return;
     }
-    const imagesCheck = validateQuestionImages(images.map((item) => item.file));
-    if (!imagesCheck.ok) {
-      setErrors((current) => ({ ...current, ...imagesCheck.errors }));
-      return;
+    for (const [index, image] of optionImages.entries()) {
+      const checked = validateOptionImage(image?.file ?? null);
+      if (!checked.ok) {
+        setErrors((current) => ({
+          ...current,
+          [`optionImage-${index}`]: checked.errors.images ?? checked.message,
+        }));
+        return;
+      }
     }
     if (dupTitle || dupDescription) {
       setErrors({
@@ -240,8 +268,11 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     setPending(true);
 
     if (mode === "demo") {
-      const imageUrls = await filesToDataUrls(imagesCheck.value.files);
-      const result = addDemoSuggestion(readDemoState(), { ...validated.value, imageUrls });
+      const optionImageUrls: (string | null)[] = [];
+      for (const image of optionImages.slice(0, validated.value.options.length)) {
+        optionImageUrls.push(image ? await fileToDataUrl(image.file) : null);
+      }
+      const result = addDemoSuggestion(readDemoState(), { ...validated.value, optionImageUrls });
       if (!result.ok) {
         setPending(false);
         if (result.code === "rate_limited") {
@@ -270,12 +301,13 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
     formData.set("category", category);
     formData.set("topic", topic);
     formData.set("company", company);
-    for (const option of options) {
+    validated.value.options.forEach((option, index) => {
       formData.append("options", option);
-    }
-    for (const item of images) {
-      formData.append("images", item.file);
-    }
+      const image = optionImages[index];
+      if (image) {
+        formData.append(`optionImage-${index}`, image.file);
+      }
+    });
 
     const result = await submitSuggestionAction(formData);
     if (!result.ok) {
@@ -430,102 +462,103 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
         <section className="space-y-3">
           <SectionLabel
-            title="관련 사진"
-            hint={`선택 사항 · 최대 ${LIMITS.maxQuestionImages}장, 각 2MB 이하`}
+            title="선택지를 만들어 주세요"
+            hint="2~4개. 각 선택지에 사진 1장을 넣을 수 있어요. 사진은 선택 사항입니다."
           />
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {images.map((item) => (
-              <div key={item.id} className="relative aspect-square overflow-hidden rounded-2xl border border-line bg-background">
-                {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
-                <img src={item.previewUrl} alt="" className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  aria-label="사진 삭제"
-                  onClick={() => removeImage(item.id)}
-                  className="absolute right-1.5 top-1.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/80 text-card"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            ))}
-            {images.length < LIMITS.maxQuestionImages ? (
-              <label
-                htmlFor={imageInputId}
-                className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-line bg-background text-muted transition hover:border-accent hover:text-accent"
-              >
-                <ImagePlus className="h-5 w-5" aria-hidden="true" />
-                <span className="text-xs font-semibold">사진 추가</span>
-              </label>
-            ) : null}
-          </div>
-          <input
-            id={imageInputId}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            className="sr-only"
-            onChange={(event) => {
-              addImages(event.target.files);
-              event.target.value = "";
-            }}
-          />
-          {errors.images ? (
-            <p className="text-sm text-danger" role="alert">
-              {errors.images}
-            </p>
-          ) : null}
-        </section>
-
-        <section className="space-y-3">
-          <SectionLabel title="선택지를 만들어 주세요" hint="2~4개. 서로 겹치지 않게 적어 주세요." />
           {errors.options ? (
             <p className="text-sm text-danger" role="alert">
               {errors.options}
             </p>
           ) : null}
-          <div className="space-y-2.5">
-            {options.map((option, index) => (
-              <div key={index} className="flex items-start gap-2">
-                <span className="mt-3 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-strong">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <label className="sr-only" htmlFor={`option-${index}`}>
-                    선택지 {index + 1}
-                  </label>
-                  <input
-                    id={`option-${index}`}
-                    value={option}
-                    onChange={(event) => updateOption(index, event.target.value)}
-                    maxLength={LIMITS.option}
-                    placeholder={`선택지 ${index + 1}`}
-                    className={`${inputClass} mt-0`}
-                  />
-                  {errors[`option-${index}`] ? (
-                    <p className="mt-1 text-sm text-danger" role="alert">
-                      {errors[`option-${index}`]}
-                    </p>
-                  ) : null}
+          <div className="space-y-3">
+            {options.map((option, index) => {
+              const image = optionImages[index] ?? null;
+              const inputId = `${baseId}-option-image-${index}`;
+              return (
+                <div key={index} className="rounded-3xl border border-line bg-background/70 p-3 sm:p-4">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-2.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-strong">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <label className="sr-only" htmlFor={`option-${index}`}>
+                        선택지 {index + 1}
+                      </label>
+                      <input
+                        id={`option-${index}`}
+                        value={option}
+                        onChange={(event) => updateOption(index, event.target.value)}
+                        maxLength={LIMITS.option}
+                        placeholder={`선택지 ${index + 1}`}
+                        className={`${inputClass} mt-0`}
+                      />
+                      {errors[`option-${index}`] ? (
+                        <p className="text-sm text-danger" role="alert">
+                          {errors[`option-${index}`]}
+                        </p>
+                      ) : null}
+                      <div className="flex items-center gap-2">
+                        {image ? (
+                          <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-line">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
+                            <img src={image.previewUrl} alt="" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              aria-label={`선택지 ${index + 1} 사진 삭제`}
+                              onClick={() => clearOptionImage(index)}
+                              className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground/80 text-card"
+                            >
+                              <X className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            htmlFor={inputId}
+                            className="pressable inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-line px-3 text-sm font-semibold text-muted hover:border-accent hover:text-accent"
+                          >
+                            <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                            사진 넣기
+                          </label>
+                        )}
+                        <input
+                          id={inputId}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          onChange={(event) => {
+                            setOptionImage(index, event.target.files);
+                            event.target.value = "";
+                          }}
+                        />
+                        <p className="text-xs text-muted">부가 설명용 · 2MB 이하</p>
+                      </div>
+                      {errors[`optionImage-${index}`] ? (
+                        <p className="text-sm text-danger" role="alert">
+                          {errors[`optionImage-${index}`]}
+                        </p>
+                      ) : null}
+                    </div>
+                    {options.length > LIMITS.minOptions ? (
+                      <button
+                        type="button"
+                        aria-label={`선택지 ${index + 1} 삭제`}
+                        onClick={() => removeOption(index)}
+                        className="mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-card hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <span className="mt-1 inline-flex h-10 w-10 shrink-0" aria-hidden="true" />
+                    )}
+                  </div>
                 </div>
-                {options.length > LIMITS.minOptions ? (
-                  <button
-                    type="button"
-                    aria-label={`선택지 ${index + 1} 삭제`}
-                    onClick={() => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))}
-                    className="mt-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-background hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : (
-                  <span className="mt-2 inline-flex h-10 w-10 shrink-0" aria-hidden="true" />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
           {options.length < LIMITS.maxOptions ? (
             <button
               type="button"
-              onClick={() => setOptions((current) => [...current, ""])}
+              onClick={addOption}
               className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-line px-4 text-sm font-semibold text-foreground hover:border-foreground/30"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />

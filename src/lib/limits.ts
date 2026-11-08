@@ -8,7 +8,7 @@ export const LIMITS = {
   nicknameMax: 16,
   avatarBytes: 2 * 1024 * 1024,
   questionImageBytes: 2 * 1024 * 1024,
-  maxQuestionImages: 3,
+  maxQuestionImages: 4,
   minOptions: 2,
   maxOptions: 4,
   suggestionsPerDay: 3,

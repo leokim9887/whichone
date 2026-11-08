@@ -17,7 +17,7 @@ import {
   validateAvatarFile,
   validateComment,
   validateNickname,
-  validateQuestionImages,
+  validateOptionImage,
   validateReport,
   validateSuggestion,
 } from "@/lib/validation";
@@ -646,18 +646,28 @@ export async function submitSuggestionAction(formData: FormData): Promise<FormAc
     .getAll("options")
     .map((item) => String(item))
     .filter((item) => item.length > 0);
-  const imageFiles = formData
-    .getAll("images")
-    .filter((item): item is File => item instanceof File && item.size > 0);
 
   const validated = validateSuggestion({ title, description, category, topic, options });
   if (!validated.ok) {
     return { ok: false, code: "invalid", message: validated.message, errors: validated.errors };
   }
-  const imagesCheck = validateQuestionImages(imageFiles);
-  if (!imagesCheck.ok) {
-    return { ok: false, code: "invalid", message: imagesCheck.message, errors: imagesCheck.errors };
+
+  const optionImageFiles: (File | null)[] = validated.value.options.map((_, index) => {
+    const entry = formData.get(`optionImage-${index}`);
+    return entry instanceof File && entry.size > 0 ? entry : null;
+  });
+  for (const [index, file] of optionImageFiles.entries()) {
+    const checked = validateOptionImage(file);
+    if (!checked.ok) {
+      return {
+        ok: false,
+        code: "invalid",
+        message: checked.message,
+        errors: { [`optionImage-${index}`]: checked.errors.images ?? checked.message },
+      };
+    }
   }
+
   if (company.trim()) {
     return {
       ok: true,
@@ -678,8 +688,12 @@ export async function submitSuggestionAction(formData: FormData): Promise<FormAc
       return failure("auth_required");
     }
 
-    const uploadedUrls: string[] = [];
-    for (const file of imagesCheck.value.files) {
+    const uploadedUrls: (string | null)[] = [];
+    for (const file of optionImageFiles) {
+      if (!file) {
+        uploadedUrls.push(null);
+        continue;
+      }
       const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
       const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -700,7 +714,7 @@ export async function submitSuggestionAction(formData: FormData): Promise<FormAc
       p_category: validated.value.category,
       p_topic: validated.value.topic,
       p_options: validated.value.options,
-      p_image_urls: uploadedUrls,
+      p_option_images: uploadedUrls,
     });
     if (error) {
       return failure("unavailable");

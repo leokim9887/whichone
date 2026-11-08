@@ -404,7 +404,7 @@ export function addDemoSuggestion(
   const suggestion: DemoSuggestion = {
     ...draft,
     description: draft.description,
-    imageUrls: draft.imageUrls ?? [],
+    optionImageUrls: draft.optionImageUrls ?? draft.options.map(() => null),
     id: `demo-suggestion-${state.suggestions.length + 1}`,
     status: "pending",
     createdAt: now,

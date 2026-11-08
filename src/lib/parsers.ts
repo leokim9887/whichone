@@ -72,8 +72,6 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     throw new Error("invalid options");
   }
 
-  const imageUrls = parseImageUrls(value.imageUrls);
-
   return {
     id,
     title,
@@ -87,29 +85,8 @@ export function parseQuestion(value: unknown, requireOptions: boolean): Question
     commentCount,
     authorNickname: null,
     authorAvatarUrl: null,
-    imageUrls,
     options,
   };
-}
-
-function parseImageUrls(value: unknown): string[] {
-  if (value === undefined || value === null) {
-    return [];
-  }
-  if (!Array.isArray(value)) {
-    throw new Error("invalid imageUrls");
-  }
-  const urls: string[] = [];
-  for (const item of value) {
-    if (typeof item !== "string" || !item.startsWith("http") || item.length > 500) {
-      throw new Error("invalid imageUrls");
-    }
-    urls.push(item);
-  }
-  if (urls.length > 3) {
-    throw new Error("invalid imageUrls");
-  }
-  return urls;
 }
 
 function asTopic(value: unknown): string | null {
@@ -126,10 +103,18 @@ function parseOption(value: unknown): Option {
   const id = asString(value.id);
   const text = asString(value.text);
   const position = asNumber(value.position);
+  const imageUrl =
+    value.imageUrl === null || value.imageUrl === undefined ? null : asString(value.imageUrl);
   if (!id || !text || position === null) {
     throw new Error("invalid option");
   }
-  return { id, text, position };
+  if (imageUrl !== null && (!imageUrl.startsWith("http") || imageUrl.length > 500)) {
+    throw new Error("invalid option image");
+  }
+  if (imageUrl === null && value.imageUrl) {
+    throw new Error("invalid option image");
+  }
+  return { id, text, position, imageUrl };
 }
 
 export function parseQuestionList(value: unknown): Question[] {

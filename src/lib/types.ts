@@ -30,6 +30,7 @@ export type Option = {
   id: string;
   text: string;
   position: number;
+  imageUrl: string | null;
 };
 
 export type UserProfile = {
@@ -75,7 +76,6 @@ export type Question = {
   commentCount: number;
   authorNickname: string | null;
   authorAvatarUrl: string | null;
-  imageUrls: string[];
   options: Option[];
 };
 
@@ -136,7 +136,7 @@ export type SuggestionDraft = {
   category: Category;
   topic: string;
   options: string[];
-  imageUrls?: string[];
+  optionImageUrls?: (string | null)[];
 };
 
 export const REPORT_REASONS: { id: ReportReason; label: string }[] = [

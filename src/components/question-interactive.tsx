@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 
 import { CommentThread } from "@/components/comment-thread";
 import { useProfile } from "@/components/profile-provider";
-import { QuestionImageGallery } from "@/components/question-images";
+import { OptionImageThumb } from "@/components/question-images";
 import { ReportForm } from "@/components/report-form";
 import { ResultBars } from "@/components/result-bars";
 import { ShareActions } from "@/components/share-actions";
@@ -82,6 +82,7 @@ export function QuestionInteractive({
     (comment) => activeFilter === "all" || comment.optionId === activeFilter,
   );
   const optionText = new Map(question.options.map((option) => [option.id, option.text]));
+  const optionImages = new Map(question.options.map((option) => [option.id, option.imageUrl]));
   const registeredLabel = formatRegisteredDate(question.publishedAt || question.createdAt);
   const participantLabel =
     mode === "demo"
@@ -182,7 +183,7 @@ export function QuestionInteractive({
 
   return (
     <div className="space-y-6">
-      <header className="rise-in space-y-4">
+      <header className="rise-in">
         <div className="surface-panel p-5 sm:p-6">
           <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
           <h1 className="mt-2 text-2xl font-bold leading-snug tracking-tight break-keep sm:text-3xl">{question.title}</h1>
@@ -191,7 +192,6 @@ export function QuestionInteractive({
             {registeredLabel ? `${registeredLabel} · ${participantLabel}` : participantLabel}
           </p>
         </div>
-        <QuestionImageGallery urls={question.imageUrls} alt={question.title} size="detail" />
       </header>
 
       {mode === "demo" ? (
@@ -216,21 +216,30 @@ export function QuestionInteractive({
               .map((option, index) => {
                 const active = selected === option.id;
                 return (
-                  <button
+                  <div
                     key={option.id}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setDraftOption(option.id)}
                     style={{ animationDelay: `${Math.min(index, 5) * 50}ms` }}
-                    className={`rise-in pressable flex min-h-14 w-full items-center justify-between gap-3 rounded-3xl border px-4 py-3 text-left text-base font-semibold transition ${
+                    className={`rise-in flex items-stretch gap-2 rounded-3xl border transition ${
                       active
                         ? "border-accent bg-accent-soft text-accent-strong shadow-[0_10px_24px_rgba(47,75,255,0.12)]"
-                        : "border-line bg-card hover:border-foreground/20"
+                        : "border-line bg-card"
                     }`}
                   >
-                    <span>{option.text}</span>
-                    {active ? <Check className="h-5 w-5 shrink-0" aria-hidden="true" /> : null}
-                  </button>
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setDraftOption(option.id)}
+                      className="pressable flex min-h-14 min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-left text-base font-semibold"
+                    >
+                      <span className="break-keep">{option.text}</span>
+                      {active ? <Check className="h-5 w-5 shrink-0" aria-hidden="true" /> : null}
+                    </button>
+                    {option.imageUrl ? (
+                      <div className="flex items-center pr-3">
+                        <OptionImageThumb src={option.imageUrl} alt={option.text} size="md" />
+                      </div>
+                    ) : null}
+                  </div>
                 );
               })}
           </div>
@@ -249,7 +258,11 @@ export function QuestionInteractive({
 
       {summary ? (
         <div className="rise-in" style={{ animationDelay: "100ms" }}>
-          <ResultBars summary={summary} scope={mode === "demo" ? "browser" : "shared"} />
+          <ResultBars
+            summary={summary}
+            scope={mode === "demo" ? "browser" : "shared"}
+            imageByOptionId={optionImages}
+          />
         </div>
       ) : null}
 
