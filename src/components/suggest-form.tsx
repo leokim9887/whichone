@@ -427,7 +427,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
         <section className="space-y-3">
           <SectionLabel
             title="선택지를 만들어 주세요"
-            hint="2~4개. 각 선택지에 사진 1장을 넣을 수 있어요. 사진은 선택 사항입니다."
+            hint="2~8개. 각 선택지에 사진 1장을 넣을 수 있어요. 사진은 선택 사항입니다."
           />
           {errors.options ? (
             <p className="text-sm text-danger" role="alert">

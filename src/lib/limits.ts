@@ -8,9 +8,9 @@ export const LIMITS = {
   nicknameMax: 16,
   avatarBytes: 2 * 1024 * 1024,
   questionImageBytes: 2 * 1024 * 1024,
-  maxQuestionImages: 4,
+  maxQuestionImages: 8,
   minOptions: 2,
-  maxOptions: 4,
+  maxOptions: 8,
   suggestionsPerDay: 3,
   search: 80,
 } as const;

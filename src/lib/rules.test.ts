@@ -23,6 +23,7 @@ import {
 import { parsePublicComments } from "./parsers.ts";
 import { toPercentages } from "./percentages.ts";
 import { buildSummary } from "./results.ts";
+import { LIMITS } from "./limits.ts";
 import { SEED_QUESTIONS } from "./seed-questions.ts";
 import { CATEGORIES } from "./types.ts";
 import { validateComment, validateSuggestion } from "./validation.ts";
@@ -369,7 +370,7 @@ describe("catalog and seed", () => {
     const titles = new Set<string>();
     for (const question of SEED_QUESTIONS) {
       assert.ok(question.title.length <= 100);
-      assert.ok(question.options.length >= 2 && question.options.length <= 4);
+      assert.ok(question.options.length >= LIMITS.minOptions && question.options.length <= LIMITS.maxOptions);
       const texts = question.options.map((option) => option.text);
       assert.equal(new Set(texts).size, texts.length);
       titles.add(question.title);
