@@ -12,6 +12,9 @@
   --danger: #9f1239;
   --ok: #047857;
   --warn: #92400e;
+  --shadow-soft: 0 12px 40px rgba(28, 25, 23, 0.05);
+  --shadow-lift: 0 22px 50px rgba(28, 25, 23, 0.12);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -47,12 +50,17 @@ html {
 
 body {
   margin: 0;
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   -webkit-tap-highlight-color: transparent;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(980px 520px at 8% -12%, rgba(47, 75, 255, 0.1), transparent 58%),
+    radial-gradient(860px 480px at 100% -8%, rgba(245, 158, 11, 0.1), transparent 52%),
+    radial-gradient(700px 420px at 50% 110%, rgba(47, 75, 255, 0.05), transparent 60%);
+  background-attachment: fixed;
 }
 
 textarea {
@@ -96,10 +104,67 @@ select {
   background: #d9e1ff;
 }
 
+.surface-panel {
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: color-mix(in srgb, var(--card) 94%, white);
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.hover-lift {
+  transition:
+    transform 0.35s var(--ease-out),
+    box-shadow 0.35s var(--ease-out),
+    border-color 0.35s var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+  border-color: color-mix(in srgb, var(--foreground) 14%, var(--line));
+}
+
+.pressable {
+  transition:
+    transform 0.2s var(--ease-out),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pressable:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(47, 75, 255, 0.22);
+  transition:
+    transform 0.2s var(--ease-out),
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+  box-shadow: 0 14px 28px rgba(47, 75, 255, 0.28);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+
 @keyframes whichone-rise {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.98);
+    transform: translateY(16px) scale(0.985);
   }
   to {
     opacity: 1;
@@ -107,8 +172,95 @@ select {
   }
 }
 
+@keyframes whichone-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes whichone-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes whichone-slide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes whichone-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes whichone-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes whichone-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 .rise-in {
-  animation: whichone-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: whichone-rise 0.65s var(--ease-out) both;
+}
+
+.fade-in {
+  animation: whichone-fade 0.45s ease both;
+}
+
+.slide-in {
+  animation: whichone-slide 0.5s var(--ease-out) both;
+}
+
+.menu-pop {
+  animation: whichone-pop 0.22s var(--ease-out) both;
+  transform-origin: top right;
+}
+
+.bar-fill {
+  transform-origin: left center;
+  animation: whichone-bar 0.85s var(--ease-out) both;
+}
+
+.soft-float {
+  animation: whichone-float 4.5s ease-in-out infinite;
+}
+
+.accent-sheen {
+  background: linear-gradient(110deg, #2f4bff 0%, #5b74ff 45%, #1d36c4 100%);
+  background-size: 180% 180%;
+  animation: whichone-shimmer 7s ease infinite alternate;
 }
 
 .today-progress {
@@ -147,16 +299,19 @@ select {
 
 .report-dialog::backdrop {
   background: rgba(28, 25, 23, 0.42);
+  backdrop-filter: blur(2px);
 }
 
 .comment-focus {
   box-shadow: 0 0 0 2px var(--accent);
   background: var(--accent-soft);
-  transition: box-shadow 0.3s ease, background 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    background 0.3s ease;
 }
 
 .content-policy-notice {
-  animation: content-policy-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: content-policy-in 0.55s var(--ease-out) both;
 }
 
 .content-policy-glow {
@@ -209,11 +364,27 @@ select {
 
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
+  .fade-in,
+  .slide-in,
+  .menu-pop,
+  .bar-fill,
+  .soft-float,
+  .accent-sheen,
   .today-progress,
   .content-policy-notice,
   .content-policy-glow,
-  .content-policy-icon {
-    animation: none;
+  .content-policy-icon,
+  .hover-lift,
+  .pressable,
+  .btn-primary {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .hover-lift:hover,
+  .pressable:active,
+  .btn-primary:active {
+    transform: none;
   }
 
   .today-progress {

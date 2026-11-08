@@ -11,7 +11,7 @@ export function ResultBars({
   const leaders = summary.options.filter((option) => option.isLeader);
 
   return (
-    <div className="space-y-4">
+    <div className="surface-panel space-y-4 p-4 sm:p-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h3 className="text-lg font-bold">{scope === "browser" ? "이 브라우저의 기록" : "투표 결과"}</h3>
         <p className="text-sm text-muted">
@@ -28,10 +28,10 @@ export function ResultBars({
       ) : (
         <p className="text-sm text-muted">아직 집계된 표가 없습니다.</p>
       )}
-      <ul className="space-y-3">
-        {summary.options.map((option) => (
+      <ul className="space-y-3.5">
+        {summary.options.map((option, index) => (
           <li key={option.optionId}>
-            <div className="mb-1 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div className="mb-1.5 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span className="min-w-0 font-semibold break-keep">
                 {option.text}
                 {option.isMine ? <span className="ml-2 text-accent">내 선택</span> : null}
@@ -46,8 +46,11 @@ export function ResultBars({
               aria-label={`${option.text} ${option.percentage}%`}
             >
               <div
-                className={`h-full rounded-full ${option.isMine ? "bg-accent" : "bg-foreground/70"}`}
-                style={{ width: `${option.percentage}%` }}
+                className={`bar-fill h-full rounded-full ${option.isMine ? "bg-accent" : "bg-foreground/70"}`}
+                style={{
+                  width: `${option.percentage}%`,
+                  animationDelay: `${Math.min(index, 6) * 70}ms`,
+                }}
               />
             </div>
           </li>

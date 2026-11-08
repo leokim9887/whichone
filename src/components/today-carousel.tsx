@@ -41,7 +41,7 @@ export function TodayCarousel({ slides, dateLabel }: { slides: TodaySlide[]; dat
     <section
       aria-roledescription="캐러셀"
       aria-label="오늘의 질문"
-      className="rounded-[24px] border border-line bg-card p-4 sm:rounded-[28px] sm:p-7"
+      className="surface-panel relative overflow-hidden p-4 sm:p-7"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -72,7 +72,11 @@ export function TodayCarousel({ slides, dateLabel }: { slides: TodaySlide[]; dat
         startX.current = null;
       }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div
+        className="pointer-events-none absolute -right-8 top-0 h-32 w-32 rounded-full bg-accent/10 blur-3xl"
+        aria-hidden="true"
+      />
+      <div className="relative flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="rounded-full bg-accent-soft px-3 py-1 font-semibold text-accent-strong">오늘의 질문</span>
           <span className="text-muted">{dateLabel}</span>
@@ -89,13 +93,13 @@ export function TodayCarousel({ slides, dateLabel }: { slides: TodaySlide[]; dat
           </div>
         ) : null}
       </div>
-      <h2 className="mt-4 min-h-14 text-xl font-bold leading-snug break-keep sm:min-h-20 sm:text-3xl">
-        {slide.title}
-      </h2>
-      <p className="mt-3 text-sm text-muted">{slide.countLabel}</p>
+      <div key={slide.id} className="slide-in relative">
+        <h2 className="mt-4 min-h-14 text-xl font-bold leading-snug break-keep sm:min-h-20 sm:text-3xl">{slide.title}</h2>
+        <p className="mt-3 text-sm text-muted">{slide.countLabel}</p>
+      </div>
       <Link
         href={`/questions/${slide.id}`}
-        className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong sm:mt-6 sm:w-auto sm:justify-start"
+        className="btn-primary mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold sm:mt-6 sm:w-auto sm:justify-start"
       >
         선택하러 가기
       </Link>
@@ -148,7 +152,7 @@ function CarouselButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-background transition duration-300 hover:-translate-y-0.5 hover:border-foreground"
+      className="pressable inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-background hover:border-foreground/30"
     >
       {children}
     </button>

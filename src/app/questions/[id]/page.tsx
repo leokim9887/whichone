@@ -47,10 +47,10 @@ async function QuestionScreen({ params }: { params: Promise<{ id: string }> }) {
 
   if (data.state === "unpublished") {
     return (
-      <div className="rounded-3xl border border-line bg-card px-5 py-8">
-        <h1 className="text-2xl font-bold">아직 공개되지 않은 질문입니다</h1>
+      <div className="rise-in surface-panel px-5 py-8">
+        <h1 className="text-2xl font-bold tracking-tight">아직 공개되지 않은 질문입니다</h1>
         <p className="mt-2 text-sm leading-6 text-muted">검토가 끝나기 전에는 선택지를 볼 수 없습니다.</p>
-        <Link href="/" className="mt-4 inline-flex min-h-11 items-center font-semibold text-accent">
+        <Link href="/" className="mt-4 inline-flex min-h-11 items-center font-semibold text-accent transition hover:text-accent-strong">
           다른 질문 보기
         </Link>
       </div>
@@ -59,10 +59,10 @@ async function QuestionScreen({ params }: { params: Promise<{ id: string }> }) {
 
   if (data.state === "unavailable") {
     return (
-      <div className="rounded-3xl border border-danger/20 bg-card px-5 py-8" role="alert">
-        <h1 className="text-2xl font-bold">질문을 불러오지 못했습니다</h1>
+      <div className="rise-in rounded-[1.75rem] border border-danger/20 bg-card px-5 py-8 shadow-[0_12px_40px_rgba(28,25,23,0.04)]" role="alert">
+        <h1 className="text-2xl font-bold tracking-tight">질문을 불러오지 못했습니다</h1>
         <p className="mt-2 text-sm leading-6 text-muted">네트워크 상태를 확인한 뒤 다시 시도해 주세요.</p>
-        <Link href={`/questions/${id}`} className="mt-4 inline-flex min-h-11 items-center font-semibold text-accent">
+        <Link href={`/questions/${id}`} className="mt-4 inline-flex min-h-11 items-center font-semibold text-accent transition hover:text-accent-strong">
           다시 시도
         </Link>
       </div>
@@ -91,11 +91,13 @@ async function RelatedSection({ question, mode }: { question: Question; mode: Da
     return null;
   }
   return (
-    <section>
-      <h2 className="text-xl font-bold">같은 주제의 다른 질문</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {related.map((item) => (
-          <QuestionCard key={item.id} question={item} mode={mode} voted={false} />
+    <section className="rise-in">
+      <h2 className="text-xl font-bold tracking-tight">같은 주제의 다른 질문</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {related.map((item, index) => (
+          <div key={item.id} className="rise-in" style={{ animationDelay: `${Math.min(index, 6) * 45}ms` }}>
+            <QuestionCard question={item} mode={mode} voted={false} />
+          </div>
         ))}
       </div>
     </section>

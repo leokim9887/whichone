@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { PageHeader } from "@/components/page-header";
 import { deleteDemoSuggestion, demoMyQuestions } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatQuestionStats, formatRegisteredDate } from "@/lib/format";
@@ -108,10 +109,11 @@ export function MyQuestionsView({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold sm:text-3xl">내 질문</h1>
-        <p className="mt-3 leading-7 text-muted">내가 작성해 공개한 질문을 모았습니다. 필요하면 여기서 삭제할 수 있습니다.</p>
-      </header>
+      <PageHeader
+        eyebrow="마이페이지"
+        title="내 질문"
+        description="내가 올려 공개한 질문을 모았습니다. 필요하면 여기서 삭제할 수 있어요."
+      />
       {mode === "demo" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm leading-6 text-warn" role="status">
           데모 모드에서는 이 브라우저에 저장한 작성 내용만 보입니다.
@@ -143,7 +145,7 @@ function QuestionRows({
 }) {
   if (items.length === 0) {
     return (
-      <p className="rounded-3xl border border-dashed border-line px-4 py-8 text-sm leading-6 text-muted">
+      <p className="rounded-[1.75rem] border border-dashed border-line bg-card/70 px-4 py-8 text-sm leading-6 text-muted">
         아직 만든 질문이 없습니다. 질문을 작성하면 여기에 나타납니다.
       </p>
     );
@@ -151,13 +153,17 @@ function QuestionRows({
 
   return (
     <ul className="space-y-3">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const canOpen = item.source === "question" && item.status === "published";
         const busy = pendingId === item.id;
         return (
-          <li key={`${item.source}-${item.id}`} className="rounded-3xl border border-line bg-card p-5">
+          <li
+            key={`${item.source}-${item.id}`}
+            className="hover-lift rise-in rounded-[1.5rem] border border-line bg-card p-5"
+            style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+          >
             {canOpen ? (
-              <Link href={`/questions/${item.id}`} className="block hover:opacity-90">
+              <Link href={`/questions/${item.id}`} className="block transition hover:opacity-90">
                 <QuestionBody item={item} canOpen={canOpen} />
               </Link>
             ) : (
@@ -168,7 +174,7 @@ function QuestionRows({
                 type="button"
                 disabled={busy}
                 onClick={() => onDelete(item)}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-50 sm:w-auto"
+                className="pressable inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-50 sm:w-auto"
               >
                 {busy ? "삭제 중" : "삭제"}
               </button>

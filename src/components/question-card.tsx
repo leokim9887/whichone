@@ -18,7 +18,7 @@ export function QuestionCard({
   const registered = formatRegisteredDate(question.publishedAt || question.createdAt);
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-line bg-card p-5 shadow-[0_1px_0_rgba(28,25,23,0.03)]">
+    <article className="hover-lift flex h-full flex-col rounded-[1.5rem] border border-line bg-card p-5 shadow-[0_1px_0_rgba(28,25,23,0.03)]">
       <QuestionImageGallery urls={question.imageUrls} alt={question.title} size="card" />
       <p className="text-xs font-semibold tracking-wide text-accent">
         {categoryTopicLabel(question.category, question.topic)}
@@ -33,7 +33,7 @@ export function QuestionCard({
         </p>
         <Link
           href={`/questions/${question.id}`}
-          className="inline-flex min-h-11 items-center rounded-2xl px-2 text-sm font-semibold text-accent"
+          className="inline-flex min-h-11 items-center rounded-2xl px-2 text-sm font-semibold text-accent transition hover:text-accent-strong"
         >
           <VoteHint mode={mode} questionId={question.id} voted={voted} />
         </Link>

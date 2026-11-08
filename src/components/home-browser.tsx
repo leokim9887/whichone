@@ -101,7 +101,7 @@ export function HomeBrowser({
     <section className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">주제별 질문</h2>
+          <h2 className="text-xl font-bold tracking-tight">주제별 질문</h2>
           <p className="mt-1 text-sm text-muted">주제를 고르면 그 안의 질문이 열립니다.</p>
         </div>
         <form
@@ -119,9 +119,9 @@ export function HomeBrowser({
               id="question-search"
               value={draftQuery}
               onChange={(event) => setDraftQuery(event.target.value.slice(0, LIMITS.search))}
-              placeholder="질문 검색"
+              placeholder="궁금한 질문을 찾아보세요"
               maxLength={LIMITS.search}
-              className="min-h-11 w-full rounded-2xl border border-line bg-card py-2 pr-10 pl-4 text-sm outline-none transition duration-300 focus:border-foreground"
+              className="min-h-11 w-full rounded-2xl border border-line bg-card/90 py-2 pr-10 pl-4 text-sm outline-none transition duration-300 focus:border-accent"
             />
             {draftQuery ? (
               <button
@@ -134,7 +134,10 @@ export function HomeBrowser({
               </button>
             ) : null}
           </div>
-          <button type="submit" className="min-h-11 shrink-0 rounded-2xl border border-line bg-card px-4 text-sm font-semibold">
+          <button
+            type="submit"
+            className="pressable min-h-11 shrink-0 rounded-2xl border border-line bg-card px-4 text-sm font-semibold hover:border-foreground/30"
+          >
             검색
           </button>
         </form>
@@ -197,7 +200,7 @@ export function HomeBrowser({
           ) : null}
 
           {sorted.items.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-line bg-card px-5 py-8">
+            <div className="rounded-[1.75rem] border border-dashed border-line bg-card/80 px-5 py-8">
               <h3 className="text-lg font-bold">{query ? "검색 결과가 없습니다" : "이 주제의 질문이 아직 없습니다"}</h3>
               <p className="mt-2 text-sm leading-6 text-muted">다른 주제나 검색어를 선택해 보세요.</p>
             </div>
@@ -206,8 +209,8 @@ export function HomeBrowser({
               {sorted.items.map((question, index) => (
                 <div
                   key={`${sort}-${question.id}`}
-                  className="rise-in transition duration-300 hover:-translate-y-1"
-                  style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+                  className="rise-in"
+                  style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
                 >
                   <QuestionCard question={question} mode={mode} voted={voted.has(question.id)} />
                 </div>

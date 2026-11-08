@@ -312,7 +312,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
   return (
     <form
-      className="overflow-hidden rounded-[1.75rem] border border-line bg-card shadow-[0_12px_40px_rgba(28,25,23,0.04)]"
+      className="surface-panel overflow-hidden"
       onSubmit={(event) => {
         event.preventDefault();
         void submit();
@@ -552,7 +552,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
         <button
           type="submit"
           disabled={blocked}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong disabled:opacity-60"
+          className="btn-primary inline-flex min-h-12 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold"
         >
           {pending ? "올리는 중…" : dupChecking ? "중복 확인 중…" : "질문 올리기"}
         </button>

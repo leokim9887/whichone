@@ -40,7 +40,7 @@ export function ShareActions({ title, description }: { title: string; descriptio
       <button
         type="button"
         onClick={() => void share()}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold sm:w-auto"
+        className="pressable inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold hover:border-foreground/25 sm:w-auto"
       >
         <Share2 className="h-4 w-4" aria-hidden="true" />
         공유하기
@@ -48,7 +48,7 @@ export function ShareActions({ title, description }: { title: string; descriptio
       <button
         type="button"
         onClick={() => void copyLink()}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold sm:w-auto"
+        className="pressable inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-card px-4 text-sm font-semibold hover:border-foreground/25 sm:w-auto"
       >
         {feedback === "링크를 복사했습니다." ? (
           <Check className="h-4 w-4" aria-hidden="true" />
@@ -58,7 +58,7 @@ export function ShareActions({ title, description }: { title: string; descriptio
         링크 복사
       </button>
       {feedback ? (
-        <p className="text-sm text-muted" role="status">
+        <p className="fade-in text-sm text-muted" role="status">
           {feedback}
         </p>
       ) : null}

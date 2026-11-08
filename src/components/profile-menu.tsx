@@ -51,7 +51,7 @@ export function ProfileMenu() {
         type="button"
         onClick={openSetup}
         disabled={loading}
-        className="inline-flex min-h-11 items-center rounded-2xl border border-line bg-card px-3 text-sm font-semibold text-foreground disabled:opacity-60"
+        className="pressable inline-flex min-h-11 items-center rounded-2xl border border-line bg-card px-3 text-sm font-semibold text-foreground shadow-[0_8px_20px_rgba(28,25,23,0.04)] disabled:opacity-60"
         aria-label="프로필 설정"
       >
         프로필 설정
@@ -69,17 +69,20 @@ export function ProfileMenu() {
         aria-haspopup="menu"
         aria-controls={menuId}
         aria-label="프로필 메뉴"
-        className="inline-flex min-h-11 max-w-[9.5rem] items-center gap-1.5 rounded-2xl border border-line bg-card px-2 text-sm font-semibold text-foreground disabled:opacity-60 sm:max-w-[10.5rem] sm:px-2.5"
+        className="pressable inline-flex min-h-11 max-w-[9.5rem] items-center gap-1.5 rounded-2xl border border-line bg-card px-2 text-sm font-semibold text-foreground shadow-[0_8px_20px_rgba(28,25,23,0.04)] disabled:opacity-60 sm:max-w-[10.5rem] sm:px-2.5"
       >
         <ProfileAvatar profile={profile} size="sm" />
         <span className="truncate">{profile.nickname}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted transition duration-300 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
       {open ? (
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-card py-1 shadow-lg"
+          className="menu-pop absolute right-0 z-30 mt-2 w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-card py-1 shadow-[0_18px_40px_rgba(28,25,23,0.14)]"
         >
           <button
             type="button"

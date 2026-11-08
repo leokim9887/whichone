@@ -182,10 +182,10 @@ export function QuestionInteractive({
 
   return (
     <div className="space-y-6">
-      <header className="space-y-4">
-        <div>
+      <header className="rise-in space-y-4">
+        <div className="surface-panel p-5 sm:p-6">
           <p className="text-sm font-semibold text-accent">{categoryTopicLabel(question.category, question.topic)}</p>
-          <h1 className="mt-2 text-2xl font-bold leading-snug break-keep sm:text-3xl">{question.title}</h1>
+          <h1 className="mt-2 text-2xl font-bold leading-snug tracking-tight break-keep sm:text-3xl">{question.title}</h1>
           {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
           <p className="mt-3 text-sm text-muted">
             {registeredLabel ? `${registeredLabel} · ${participantLabel}` : participantLabel}
@@ -207,13 +207,13 @@ export function QuestionInteractive({
       ) : null}
 
       {!participation.voted ? (
-        <section className="space-y-3">
+        <section className="rise-in space-y-3" style={{ animationDelay: "80ms" }}>
           <h2 className="text-lg font-bold">선택지</h2>
           <div className="space-y-3">
             {question.options
               .slice()
               .sort((a, b) => a.position - b.position)
-              .map((option) => {
+              .map((option, index) => {
                 const active = selected === option.id;
                 return (
                   <button
@@ -221,8 +221,11 @@ export function QuestionInteractive({
                     type="button"
                     aria-pressed={active}
                     onClick={() => setDraftOption(option.id)}
-                    className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-3xl border px-4 py-3 text-left text-base font-semibold ${
-                      active ? "border-accent bg-accent-soft text-accent-strong" : "border-line bg-card"
+                    style={{ animationDelay: `${Math.min(index, 5) * 50}ms` }}
+                    className={`rise-in pressable flex min-h-14 w-full items-center justify-between gap-3 rounded-3xl border px-4 py-3 text-left text-base font-semibold transition ${
+                      active
+                        ? "border-accent bg-accent-soft text-accent-strong shadow-[0_10px_24px_rgba(47,75,255,0.12)]"
+                        : "border-line bg-card hover:border-foreground/20"
                     }`}
                   >
                     <span>{option.text}</span>
@@ -236,7 +239,7 @@ export function QuestionInteractive({
             type="button"
             onClick={() => void vote()}
             disabled={!selected || saving}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
+            className="btn-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold sm:w-auto"
           >
             {saving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             {saving ? "투표하는 중" : "투표하기"}
@@ -244,10 +247,14 @@ export function QuestionInteractive({
         </section>
       ) : null}
 
-      {summary ? <ResultBars summary={summary} scope={mode === "demo" ? "browser" : "shared"} /> : null}
+      {summary ? (
+        <div className="rise-in" style={{ animationDelay: "100ms" }}>
+          <ResultBars summary={summary} scope={mode === "demo" ? "browser" : "shared"} />
+        </div>
+      ) : null}
 
       {participation.voted ? (
-        <section className="space-y-4 rounded-3xl border border-line bg-card p-4 sm:p-5">
+        <section className="rise-in space-y-4 rounded-[1.75rem] border border-line bg-card p-4 shadow-[0_12px_40px_rgba(28,25,23,0.04)] sm:p-5">
           <div>
             <h2 className="text-lg font-bold">댓글 달기</h2>
             <p className="mt-1 text-sm leading-6 text-muted">
@@ -274,7 +281,7 @@ export function QuestionInteractive({
               maxLength={LIMITS.comment}
               rows={4}
               placeholder="생각을 짧게 남겨 주세요."
-              className="w-full rounded-2xl border border-line bg-background px-3 py-3 text-base font-normal"
+              className="w-full rounded-2xl border border-line bg-background px-3.5 py-3 text-base font-normal outline-none transition focus:border-accent"
             />
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
               <p className="text-xs text-muted">
@@ -283,7 +290,7 @@ export function QuestionInteractive({
               <button
                 type="submit"
                 disabled={commentSaving}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60 sm:w-auto"
+                className="pressable inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-foreground px-4 text-sm font-semibold text-card disabled:opacity-60 sm:w-auto"
               >
                 {commentSaving ? "저장 중" : "등록"}
               </button>
@@ -336,7 +343,7 @@ export function QuestionInteractive({
           </div>
         </section>
       ) : (
-        <p className="rounded-3xl border border-dashed border-line px-4 py-5 text-sm leading-6 text-muted">
+        <p className="rounded-[1.75rem] border border-dashed border-line bg-card/60 px-4 py-5 text-sm leading-6 text-muted">
           투표한 뒤에 결과와 다른 사람의 이유를 볼 수 있습니다.
         </p>
       )}
@@ -354,8 +361,8 @@ function FilterChip({ active, label, onClick }: { active: boolean; label: string
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm font-semibold ${
-        active ? "bg-foreground text-card" : "border border-line bg-background"
+      className={`pressable inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm font-semibold transition ${
+        active ? "bg-foreground text-card shadow-[0_8px_18px_rgba(28,25,23,0.14)]" : "border border-line bg-background"
       }`}
     >
       {label}

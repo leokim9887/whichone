@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { PageHeader } from "@/components/page-header";
 import { deleteDemoPost, demoMyComments } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatDateTime } from "@/lib/format";
@@ -85,12 +86,11 @@ export function MyCommentsView({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold sm:text-3xl">내가 쓴 댓글</h1>
-        <p className="mt-3 leading-7 text-muted">
-          내가 남긴 댓글과 답글입니다. 항목을 누르면 해당 질문으로 이동하고, 필요하면 여기서 삭제할 수 있습니다.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="마이페이지"
+        title="내가 쓴 댓글"
+        description="남긴 댓글과 답글이에요. 항목을 누르면 해당 질문으로 이동하고, 필요하면 여기서 삭제할 수 있어요."
+      />
       {mode === "demo" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm leading-6 text-warn" role="status">
           데모 모드에서는 이 브라우저에 저장한 댓글·답글만 보입니다.
@@ -122,7 +122,7 @@ function CommentRows({
 }) {
   if (items.length === 0) {
     return (
-      <p className="rounded-3xl border border-dashed border-line px-4 py-8 text-sm leading-6 text-muted">
+      <p className="rounded-[1.75rem] border border-dashed border-line bg-card/70 px-4 py-8 text-sm leading-6 text-muted">
         아직 남긴 댓글이나 답글이 없습니다.
       </p>
     );
@@ -130,13 +130,17 @@ function CommentRows({
 
   return (
     <ul className="space-y-3">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const busy = pendingId === item.id;
         return (
-          <li key={item.id} className="rounded-3xl border border-line bg-card p-5">
+          <li
+            key={item.id}
+            className="hover-lift rise-in rounded-[1.5rem] border border-line bg-card p-5"
+            style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+          >
             <Link
               href={`/questions/${item.questionId}?comment=${encodeURIComponent(item.id)}`}
-              className="block hover:opacity-90"
+              className="block transition hover:opacity-90"
             >
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted">
                 <span className="text-accent">{item.isReply ? "내 답글" : "내 댓글"}</span>
@@ -151,7 +155,7 @@ function CommentRows({
                 type="button"
                 disabled={busy}
                 onClick={() => onDelete(item)}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-50 sm:w-auto"
+                className="pressable inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-danger/30 px-4 text-sm font-semibold text-danger disabled:opacity-50 sm:w-auto"
               >
                 {busy ? "삭제 중" : "삭제"}
               </button>

@@ -17,7 +17,12 @@ export function QuestionImageGallery({
     return (
       <div className="mb-3 overflow-hidden rounded-2xl bg-background">
         {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded question photos */}
-        <img src={urls[0]} alt={alt} className="aspect-[16/10] w-full object-cover" loading="lazy" />
+        <img
+          src={urls[0]}
+          alt={alt}
+          className="aspect-[16/10] w-full object-cover transition duration-500 hover:scale-[1.02]"
+          loading="lazy"
+        />
         {urls.length > 1 ? (
           <p className="px-3 py-1.5 text-xs font-semibold text-muted">사진 {urls.length}장</p>
         ) : null}
