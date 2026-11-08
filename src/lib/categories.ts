@@ -7,6 +7,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   work: "직장·커리어",
   food: "음식",
   values: "가치관",
+  sports: "스포츠",
 };
 
 export const CATEGORY_FILTERS = ["all", ...CATEGORIES] as const;

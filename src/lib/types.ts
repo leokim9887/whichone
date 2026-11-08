@@ -5,6 +5,7 @@ export const CATEGORIES = [
   "work",
   "food",
   "values",
+  "sports",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];

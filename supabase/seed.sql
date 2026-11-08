@@ -78,4 +78,16 @@ insert into public.questions (id, title, description, category, topic, status, c
 insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000056', '10000000-0000-4000-8000-000000000018', '바로 답하는 성의', 0);
 insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000057', '10000000-0000-4000-8000-000000000018', '쉰 뒤에 답하는 여유', 1);
 insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000058', '10000000-0000-4000-8000-000000000018', '급한 일인지 먼저 구분하는 것', 2);
+insert into public.questions (id, title, description, category, topic, status, created_at, published_at, daily_feature_date) values ('10000000-0000-4000-8000-000000000019', '중요한 경기가 겹쳤을 때 나는?', '시간을 어디에 쓰는지로 응원 방식을 고르는 질문입니다.', 'sports'::public.question_category, 'match', 'published', '2026-09-19T00:00:00.000Z'::timestamptz, '2026-09-19T00:00:00.000Z'::timestamptz, null);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000059', '10000000-0000-4000-8000-000000000019', '끝까지 시청한다', 0);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000060', '10000000-0000-4000-8000-000000000019', '하이라이트만 본다', 1);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000061', '10000000-0000-4000-8000-000000000019', '친구와 같이 보며 즐긴다', 2);
+insert into public.questions (id, title, description, category, topic, status, created_at, published_at, daily_feature_date) values ('10000000-0000-4000-8000-000000000020', '운동을 이어가게 만드는 쪽은?', '혼자와 함께 중 어떤 방식이 더 오래가는지 묻습니다.', 'sports'::public.question_category, 'training', 'published', '2026-09-20T00:00:00.000Z'::timestamptz, '2026-09-20T00:00:00.000Z'::timestamptz, null);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000062', '10000000-0000-4000-8000-000000000020', '혼자 꾸준히 하는 루틴', 0);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000063', '10000000-0000-4000-8000-000000000020', '함께하는 팀·클래스', 1);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000064', '10000000-0000-4000-8000-000000000020', '날마다 목표를 조금씩 바꾼다', 2);
+insert into public.questions (id, title, description, category, topic, status, created_at, published_at, daily_feature_date) values ('10000000-0000-4000-8000-000000000021', '응원하는 팀이 연패 중일 때 나는?', '팬으로서의 거리와 애정을 어떻게 지키는지 고릅니다.', 'sports'::public.question_category, 'fandom', 'published', '2026-09-21T00:00:00.000Z'::timestamptz, '2026-09-21T00:00:00.000Z'::timestamptz, null);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000065', '10000000-0000-4000-8000-000000000021', '더 열심히 응원한다', 0);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000066', '10000000-0000-4000-8000-000000000021', '잠시 거리를 둔다', 1);
+insert into public.options (id, question_id, text, position) values ('20000000-0000-4000-8000-000000000067', '10000000-0000-4000-8000-000000000021', '다른 종목·선수를 잠시 본다', 2);
 commit;

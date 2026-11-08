@@ -18,6 +18,11 @@ const CATEGORY_IMAGE: Record<Category, string> = {
   work: "/categories/work-office.jpg",
   food: "/categories/food.jpg",
   values: "/categories/values.jpg",
+  sports: "/categories/sports.jpg",
+};
+
+const CATEGORY_IMAGE_POSITION: Partial<Record<Category, string>> = {
+  sports: "object-[center_42%]",
 };
 
 export function HomeBrowser({
@@ -144,15 +149,16 @@ export function HomeBrowser({
       </div>
 
       {browsingTopics ? (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {CATEGORIES.map((item, index) => (
             <CategoryCard
               key={item}
               label={CATEGORY_LABEL[item]}
               count={counts.get(item) ?? 0}
               image={CATEGORY_IMAGE[item]}
+              imageClassName={CATEGORY_IMAGE_POSITION[item]}
               delay={index * 55}
-              priority={index < 2}
+              priority={index < 4}
               onClick={() => chooseCategory(item)}
             />
           ))}
@@ -227,6 +233,7 @@ function CategoryCard({
   label,
   count,
   image,
+  imageClassName,
   delay,
   priority,
   onClick,
@@ -234,6 +241,7 @@ function CategoryCard({
   label: string;
   count: number;
   image: string;
+  imageClassName?: string;
   delay: number;
   priority: boolean;
   onClick: () => void;
@@ -242,20 +250,20 @@ function CategoryCard({
     <button
       type="button"
       onClick={onClick}
-      className="rise-in group relative min-h-40 overflow-hidden rounded-3xl border border-line text-left shadow-[0_1px_0_rgba(28,25,23,0.04)] transition duration-500 active:scale-[0.99] hover:-translate-y-1.5 hover:shadow-[0_22px_50px_rgba(28,25,23,0.16)] sm:min-h-52"
+      className="rise-in group relative min-h-40 overflow-hidden rounded-3xl border border-line text-left shadow-[0_1px_0_rgba(28,25,23,0.04)] transition duration-500 active:scale-[0.99] hover:-translate-y-1.5 hover:shadow-[0_22px_50px_rgba(28,25,23,0.16)] sm:min-h-48 lg:min-h-52"
       style={{ animationDelay: `${delay}ms` }}
     >
       <Image
         src={image}
         alt=""
         fill
-        sizes="(min-width: 640px) 480px, 100vw"
+        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
         priority={priority}
-        className="object-cover transition duration-700 ease-out group-hover:scale-105"
+        className={`object-cover transition duration-700 ease-out group-hover:scale-105 ${imageClassName ?? ""}`}
       />
       <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/5 transition duration-500 group-hover:from-black/80" />
       <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/25 opacity-0 transition duration-700 group-hover:left-full group-hover:opacity-100" />
-      <span className="relative flex h-full min-h-40 flex-col justify-end p-4 text-white sm:min-h-52 sm:p-5">
+      <span className="relative flex h-full min-h-40 flex-col justify-end p-4 text-white sm:min-h-48 sm:p-5 lg:min-h-52">
         <span className="text-xs font-medium tracking-wide text-white/80">질문 {count}개</span>
         <span className="mt-1 flex items-end justify-between gap-3">
           <span className="text-xl font-bold tracking-tight sm:text-2xl">{label}</span>

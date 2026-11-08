@@ -136,6 +136,27 @@ export const TOPICS: readonly Topic[] = [
     exampleTitle: "휴일에 연락이 왔을 때 더 중요한 것은?",
     exampleOptions: ["바로 답하는 성의", "쉰 뒤에 답하는 여유"],
   },
+  {
+    id: "match",
+    category: "sports",
+    label: "경기·응원",
+    exampleTitle: "중요한 경기가 겹쳤을 때 나는?",
+    exampleOptions: ["끝까지 시청한다", "하이라이트만 본다"],
+  },
+  {
+    id: "training",
+    category: "sports",
+    label: "운동·루틴",
+    exampleTitle: "운동을 이어가게 만드는 쪽은?",
+    exampleOptions: ["혼자 꾸준히 하는 루틴", "함께하는 팀·클래스"],
+  },
+  {
+    id: "fandom",
+    category: "sports",
+    label: "팬심",
+    exampleTitle: "응원하는 팀이 연패 중일 때 나는?",
+    exampleOptions: ["더 열심히 응원한다", "잠시 거리를 둔다"],
+  },
 ];
 
 const TOPIC_BY_ID = new Map(TOPICS.map((topic) => [topic.id, topic]));

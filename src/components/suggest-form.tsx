@@ -380,7 +380,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
 
         <section className="space-y-3">
           <SectionLabel title="주제를 골라 주세요" hint="비슷한 질문을 찾는 데 도움이 됩니다." />
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {CATEGORIES.map((item) => {
               const active = category === item;
               return (
@@ -389,9 +389,9 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
                   type="button"
                   aria-pressed={active}
                   onClick={() => chooseCategory(item)}
-                  className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold transition ${
+                  className={`inline-flex min-h-11 items-center justify-center rounded-2xl px-3 text-sm font-semibold transition ${
                     active
-                      ? "bg-foreground text-card"
+                      ? "bg-foreground text-card shadow-[0_10px_22px_rgba(28,25,23,0.14)]"
                       : "border border-line bg-background text-foreground hover:border-foreground/30"
                   }`}
                 >

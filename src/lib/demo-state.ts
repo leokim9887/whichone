@@ -451,7 +451,8 @@ export function categoryOfSuggestion(value: string): Category | null {
     value === "money" ||
     value === "work" ||
     value === "food" ||
-    value === "values"
+    value === "values" ||
+    value === "sports"
   ) {
     return value;
   }

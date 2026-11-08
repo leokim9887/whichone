@@ -122,7 +122,7 @@ describe("daily question", () => {
       again.map((question) => question.id),
     );
     assert.equal(new Set(daily.map((question) => question.category)).size, daily.length);
-    assert.equal(daily.length, 6);
+    assert.equal(daily.length, CATEGORIES.length);
   });
 });
 
