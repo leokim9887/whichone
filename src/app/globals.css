@@ -362,6 +362,53 @@ select {
   }
 }
 
+.scroll-edge-btn {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, white);
+  color: var(--foreground);
+  box-shadow:
+    0 10px 24px rgba(28, 25, 23, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  backdrop-filter: blur(10px);
+  animation: scroll-edge-in 0.28s var(--ease-out) both;
+  transition:
+    transform 0.2s var(--ease-out),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.scroll-edge-btn:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  color: var(--accent-strong);
+  box-shadow:
+    0 14px 28px rgba(47, 75, 255, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+.scroll-edge-btn:active {
+  transform: scale(0.96);
+}
+
+@keyframes scroll-edge-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
   .fade-in,
@@ -376,14 +423,17 @@ select {
   .content-policy-icon,
   .hover-lift,
   .pressable,
-  .btn-primary {
+  .btn-primary,
+  .scroll-edge-btn {
     animation: none !important;
     transition: none !important;
   }
 
   .hover-lift:hover,
   .pressable:active,
-  .btn-primary:active {
+  .btn-primary:active,
+  .scroll-edge-btn:hover,
+  .scroll-edge-btn:active {
     transform: none;
   }
 

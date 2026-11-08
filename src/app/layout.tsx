@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 
 import { ProfileProvider } from "@/components/profile-provider";
+import { ScrollEdges } from "@/components/scroll-edges";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { siteUrl } from "@/lib/env";
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </main>
           <SiteFooter />
+          <ScrollEdges />
         </ProfileProvider>
       </body>
     </html>
