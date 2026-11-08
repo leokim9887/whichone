@@ -44,7 +44,7 @@ export function ScrollEdges() {
 
   return (
     <div
-      className="scroll-edges pointer-events-none fixed right-3 z-40 flex flex-col gap-2 sm:right-5"
+      className="scroll-edges pointer-events-none fixed right-3.5 z-40 flex flex-col gap-2.5 sm:right-6"
       style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
       aria-label="페이지 이동"
     >
@@ -55,7 +55,7 @@ export function ScrollEdges() {
           className="scroll-edge-btn pointer-events-auto"
           aria-label="맨 위로 이동"
         >
-          <ChevronUp className="h-4 w-4" aria-hidden="true" />
+          <ChevronUp className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
         </button>
       ) : null}
       {showBottom ? (
@@ -65,7 +65,7 @@ export function ScrollEdges() {
           className="scroll-edge-btn pointer-events-auto"
           aria-label="맨 아래로 이동"
         >
-          <ChevronDown className="h-4 w-4" aria-hidden="true" />
+          <ChevronDown className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
         </button>
       ) : null}
     </div>
