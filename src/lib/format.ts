@@ -29,5 +29,13 @@ export function formatDateTime(iso: string): string {
     hourCycle: "h23",
   }).formatToParts(date);
   const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
-  return `${value("year")}. ${value("month")}. ${value("day")}. ${value("hour")}:${value("minute")}`;
+  return `${value("year")}.${value("month")}.${value("day")}. ${value("hour")}:${value("minute")}`;
+}
+
+export function formatRegisteredDate(iso: string | null | undefined): string {
+  if (!iso) {
+    return "";
+  }
+  const formatted = formatDateTime(iso);
+  return formatted ? `등록 ${formatted}` : "";
 }

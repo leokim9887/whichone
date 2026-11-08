@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { deleteDemoPost, demoMyComments } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatDateTime } from "@/lib/format";
 import { messageForCode } from "@/lib/messages";
+import { listMyCommentsLive } from "@/lib/my-content-live";
 import { getSeedQuestions } from "@/lib/seed-questions";
 import type { DataMode, MyCommentItem } from "@/lib/types";
 import { deleteMyCommentAction } from "@/server/actions";
@@ -24,13 +25,33 @@ export function MyCommentsView({
   const router = useRouter();
   const demo = useDemoState();
   const [items, setItems] = useState(initialItems);
+  const [itemsSource, setItemsSource] = useState(initialItems);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  if (initialItems !== itemsSource) {
+    setItemsSource(initialItems);
+    setItems(initialItems);
+  }
   const titles = useMemo(
     () => new Map(getSeedQuestions().map((question) => [question.id, question.title])),
     [],
   );
   const visible = mode === "demo" ? demoMyComments(demo, titles) : items;
+
+  useEffect(() => {
+    if (mode !== "live") {
+      return;
+    }
+    let cancelled = false;
+    void listMyCommentsLive().then((fresh) => {
+      if (!cancelled && fresh) {
+        setItems(fresh);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   async function removeItem(item: MyCommentItem) {
     const label = item.isReply ? "답글" : "댓글";

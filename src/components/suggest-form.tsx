@@ -81,6 +81,7 @@ function SuggestFormFields({ mode }: { mode: DataMode }) {
   function goHomeClean() {
     try {
       sessionStorage.setItem(SUGGEST_RESET_KEY, "1");
+      sessionStorage.setItem("whichone:my-questions-dirty", "1");
     } catch {
       // ignore storage failures
     }

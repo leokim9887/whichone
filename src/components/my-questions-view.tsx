@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { deleteDemoSuggestion, demoMyQuestions } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
 import { formatDateTime, formatQuestionStats } from "@/lib/format";
 import { messageForCode } from "@/lib/messages";
+import { listMyQuestionsLive } from "@/lib/my-content-live";
 import { deleteMyQuestionLive } from "@/lib/question-live";
 import { canWriteQuestionToday, invalidateWriteQuotaCache } from "@/lib/suggest-quota";
 import { categoryTopicLabel } from "@/lib/topics";
@@ -44,9 +45,33 @@ export function MyQuestionsView({
   const router = useRouter();
   const demo = useDemoState();
   const [items, setItems] = useState(initialItems);
+  const [itemsSource, setItemsSource] = useState(initialItems);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  if (initialItems !== itemsSource) {
+    setItemsSource(initialItems);
+    setItems(initialItems);
+  }
   const visible = mode === "demo" ? demoMyQuestions(demo) : items;
+
+  useEffect(() => {
+    if (mode !== "live") {
+      return;
+    }
+    let cancelled = false;
+    const dirty = sessionStorage.getItem("whichone:my-questions-dirty") === "1";
+    if (dirty) {
+      sessionStorage.removeItem("whichone:my-questions-dirty");
+    }
+    void listMyQuestionsLive().then((fresh) => {
+      if (!cancelled && fresh) {
+        setItems(fresh);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   async function removeItem(item: MyQuestionItem) {
     const confirmed = window.confirm(`「${item.title}」 질문을 삭제할까요? 삭제하면 되돌릴 수 없습니다.`);
@@ -164,7 +189,9 @@ function QuestionBody({ item, canOpen }: { item: MyQuestionItem; canOpen: boolea
       </div>
       <h2 className="mt-2 text-lg font-bold leading-7">{item.title}</h2>
       <p className="mt-2 text-sm text-muted">
-        {canOpen ? formatQuestionStats(item.participantCount, item.commentCount) : `작성일 ${formatDateTime(item.createdAt)}`}
+        {canOpen ? formatQuestionStats(item.participantCount, item.commentCount) : null}
+        {canOpen ? " · " : null}
+        등록 {formatDateTime(item.publishedAt || item.createdAt)}
       </p>
     </>
   );

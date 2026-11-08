@@ -261,12 +261,10 @@ export async function loadMyQuestions(): Promise<{
   }
   try {
     const supabase = await createServerSupabase();
-    const existing = await supabase.auth.getSession();
-    if (existing.error || !existing.data.session?.user) {
-      const signedIn = await supabase.auth.signInAnonymously();
-      if (signedIn.error || !signedIn.data.user) {
-        return { mode: "live", items: [], error: null };
-      }
+    const existing = await supabase.auth.getUser();
+    if (existing.error || !existing.data.user) {
+      // 새 익명 계정을 만들면 방금 작성한 질문이 다른 사용자로 보여 빈 목록이 됩니다.
+      return { mode: "live", items: [], error: null };
     }
     const { data, error } = await supabase.rpc("list_my_questions");
     if (error) {
@@ -289,12 +287,9 @@ export async function loadMyComments(): Promise<{
   }
   try {
     const supabase = await createServerSupabase();
-    const existing = await supabase.auth.getSession();
-    if (existing.error || !existing.data.session?.user) {
-      const signedIn = await supabase.auth.signInAnonymously();
-      if (signedIn.error || !signedIn.data.user) {
-        return { mode: "live", items: [], error: null };
-      }
+    const existing = await supabase.auth.getUser();
+    if (existing.error || !existing.data.user) {
+      return { mode: "live", items: [], error: null };
     }
     const { data, error } = await supabase.rpc("list_my_comments");
     if (error) {

@@ -12,7 +12,7 @@ import { ShareActions } from "@/components/share-actions";
 import { categoryTopicLabel } from "@/lib/topics";
 import { addDemoComment, castDemoVote, demoPublicComments } from "@/lib/demo-state";
 import { useDemoState, writeDemoState } from "@/lib/demo-storage";
-import { formatParticipantCount } from "@/lib/format";
+import { formatParticipantCount, formatRegisteredDate } from "@/lib/format";
 import { LIMITS } from "@/lib/limits";
 import { messageForCode } from "@/lib/messages";
 import { readDemoProfile } from "@/lib/profile-storage";
@@ -81,6 +81,11 @@ export function QuestionInteractive({
     (comment) => activeFilter === "all" || comment.optionId === activeFilter,
   );
   const optionText = new Map(question.options.map((option) => [option.id, option.text]));
+  const registeredLabel = formatRegisteredDate(question.publishedAt || question.createdAt);
+  const participantLabel =
+    mode === "demo"
+      ? "공유 참여자 수는 집계하지 않습니다"
+      : formatParticipantCount(participation.voted ? participation.participantCount : question.participantCount);
 
   async function vote() {
     if (!selected || participation.voted || saving) {
@@ -181,9 +186,7 @@ export function QuestionInteractive({
         <h1 className="mt-2 text-2xl font-bold leading-snug break-keep sm:text-3xl">{question.title}</h1>
         {question.description ? <p className="mt-3 leading-7 text-muted">{question.description}</p> : null}
         <p className="mt-3 text-sm text-muted">
-          {mode === "demo"
-            ? "공유 참여자 수는 집계하지 않습니다"
-            : formatParticipantCount(participation.voted ? participation.participantCount : question.participantCount)}
+          {registeredLabel ? `${registeredLabel} · ${participantLabel}` : participantLabel}
         </p>
       </header>
 

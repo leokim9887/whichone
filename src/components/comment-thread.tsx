@@ -1,7 +1,7 @@
 "use client";
 
-import { MessageCircle, Pencil, ThumbsUp, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Heart, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useProfile } from "@/components/profile-provider";
@@ -60,7 +60,7 @@ export function CommentThread({
   const [editBody, setEditBody] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
-  const { ensureProfile, openSetup, profile } = useProfile();
+  const { ensureProfile, openSetup } = useProfile();
   const likesInFlight = useRef(new Set<string>());
   const replyLock = useRef(false);
   const editLock = useRef(false);
@@ -275,14 +275,12 @@ export function CommentThread({
   }
 
   return (
-    <ul className="mt-4 space-y-3">
+    <ul className="mt-2 divide-y divide-line">
       {comments.map((comment) => (
         <li
           key={comment.id}
           id={`comment-${comment.id}`}
-          className={`scroll-mt-24 rounded-2xl border border-line px-4 py-3 ${
-            focusCommentId === comment.id ? "comment-focus" : ""
-          }`}
+          className={`scroll-mt-24 py-4 ${focusCommentId === comment.id ? "comment-focus rounded-2xl px-2" : ""}`}
         >
           {editingId === comment.id ? (
             <EditForm
@@ -297,87 +295,48 @@ export function CommentThread({
               onSave={() => void saveEdit(comment.id)}
             />
           ) : (
-            <CommentBodyView item={comment} optionText={optionText} badge={comment.mine ? "내 의견" : null} />
-          )}
-          <CommentActions
-            item={comment}
-            canReply
-            mode={mode}
-            demo={demo}
-            onDemoState={onDemoState}
-            likeError={likeError?.id === comment.id ? likeError.message : null}
-            actionError={actionError?.id === comment.id ? actionError.message : null}
-            replyOpen={openReplyId === comment.id}
-            editing={editingId === comment.id}
-            onLike={() => void like(comment.id)}
-            onToggleReply={() => {
-              setReplyError(null);
-              setReplyBody("");
-              setEditingId(null);
-              setOpenReplyId((current) => (current === comment.id ? null : comment.id));
-            }}
-            onEdit={() => beginEdit(comment)}
-            onDelete={() => void removePost(comment, true)}
-          />
-          {openReplyId === comment.id ? (
-            <form
-              className="mt-3 space-y-2 rounded-2xl bg-background px-3 py-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void saveReply(comment.id);
+            <CafeCommentRow
+              item={comment}
+              optionLabel={optionText.get(comment.optionId) ?? null}
+              canReply
+              replyOpen={openReplyId === comment.id}
+              mode={mode}
+              demo={demo}
+              onDemoState={onDemoState}
+              likeError={likeError?.id === comment.id ? likeError.message : null}
+              actionError={actionError?.id === comment.id ? actionError.message : null}
+              onLike={() => void like(comment.id)}
+              onToggleReply={() => {
+                setReplyError(null);
+                setReplyBody("");
+                setEditingId(null);
+                setOpenReplyId((current) => (current === comment.id ? null : comment.id));
               }}
-            >
-              <label className="block text-sm font-semibold" htmlFor={`reply-${comment.id}`}>
-                답글
-                <textarea
-                  id={`reply-${comment.id}`}
-                  value={replyBody}
-                  onChange={(event) => setReplyBody(event.target.value)}
-                  maxLength={LIMITS.comment}
-                  rows={3}
-                  placeholder="이 의견에 짧게 답해 주세요."
-                  className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-3 font-normal"
-                />
-              </label>
-              <p className="text-right text-xs text-muted">
-                {replyBody.length}/{LIMITS.comment}
-              </p>
-              <p className="text-xs leading-5 text-muted">닉네임이 함께 표시됩니다. 같은 의견에 답글을 여러 번 남길 수 있습니다.</p>
-              {replyError ? (
-                <p className="text-sm text-danger" role="alert">
-                  {replyError}
-                </p>
-              ) : null}
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpenReplyId(null);
-                    setReplyBody("");
-                    setReplyError(null);
-                  }}
-                  className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-muted"
-                >
-                  닫기
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-card"
-                >
-                  답글 남기기
-                </button>
-              </div>
-            </form>
+              onEdit={() => beginEdit(comment)}
+              onDelete={() => void removePost(comment, true)}
+            />
+          )}
+          {openReplyId === comment.id ? (
+            <ReplyComposer
+              commentId={comment.id}
+              body={replyBody}
+              error={replyError}
+              onBodyChange={setReplyBody}
+              onCancel={() => {
+                setOpenReplyId(null);
+                setReplyBody("");
+                setReplyError(null);
+              }}
+              onSubmit={() => void saveReply(comment.id)}
+            />
           ) : null}
           {comment.replies.length > 0 ? (
-            <ul className="mt-3 space-y-3 border-l border-line pl-3">
+            <ul className="mt-1 divide-y divide-line/80 border-l border-line ml-5 pl-4 sm:ml-10">
               {comment.replies.map((reply) => (
                 <li
                   key={reply.id}
                   id={`comment-${reply.id}`}
-                  className={`scroll-mt-24 rounded-2xl bg-background px-3 py-3 ${
-                    focusCommentId === reply.id ? "comment-focus" : ""
-                  }`}
+                  className={`scroll-mt-24 py-4 ${focusCommentId === reply.id ? "comment-focus rounded-2xl px-2" : ""}`}
                 >
                   {editingId === reply.id ? (
                     <EditForm
@@ -392,23 +351,22 @@ export function CommentThread({
                       onSave={() => void saveEdit(reply.id)}
                     />
                   ) : (
-                    <CommentBodyView item={reply} optionText={optionText} badge={reply.mine ? "내 답글" : "답글"} />
+                    <CafeCommentRow
+                      item={reply}
+                      optionLabel={optionText.get(reply.optionId) ?? null}
+                      canReply={false}
+                      replyOpen={false}
+                      mode={mode}
+                      demo={demo}
+                      onDemoState={onDemoState}
+                      likeError={likeError?.id === reply.id ? likeError.message : null}
+                      actionError={actionError?.id === reply.id ? actionError.message : null}
+                      onLike={() => void like(reply.id)}
+                      onToggleReply={() => undefined}
+                      onEdit={() => beginEdit(reply)}
+                      onDelete={() => void removePost(reply, false)}
+                    />
                   )}
-                  <CommentActions
-                    item={reply}
-                    canReply={false}
-                    mode={mode}
-                    demo={demo}
-                    onDemoState={onDemoState}
-                    likeError={likeError?.id === reply.id ? likeError.message : null}
-                    actionError={actionError?.id === reply.id ? actionError.message : null}
-                    replyOpen={false}
-                    editing={editingId === reply.id}
-                    onLike={() => void like(reply.id)}
-                    onToggleReply={() => undefined}
-                    onEdit={() => beginEdit(reply)}
-                    onDelete={() => void removePost(reply, false)}
-                  />
                 </li>
               ))}
             </ul>
@@ -473,130 +431,286 @@ function EditForm({
   );
 }
 
-function CommentBodyView({
+function CafeCommentRow({
   item,
-  optionText,
-  badge,
-}: {
-  item: PublicReply;
-  optionText: Map<string, string>;
-  badge: string | null;
-}) {
-  return (
-    <div className="flex gap-3">
-      <ProfileAvatar profile={{ nickname: item.nickname, avatarUrl: item.avatarUrl }} size="sm" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-muted">
-          <span className="text-foreground">{item.nickname}</span>
-          <span className="mx-1.5 text-line">·</span>
-          {badge ? <span className="mr-2 text-accent">{badge}</span> : null}
-          {optionText.get(item.optionId) ?? "선택"}
-        </p>
-        <p className="mt-1.5 leading-7">{item.body}</p>
-      </div>
-    </div>
-  );
-}
-
-function CommentActions({
-  item,
+  optionLabel,
   canReply,
+  replyOpen,
   mode,
   demo,
   onDemoState,
   likeError,
   actionError,
-  replyOpen,
-  editing,
   onLike,
   onToggleReply,
   onEdit,
   onDelete,
 }: {
   item: PublicReply;
+  optionLabel: string | null;
   canReply: boolean;
+  replyOpen: boolean;
   mode: DataMode;
   demo: DemoState;
   onDemoState: (state: DemoState) => void;
   likeError: string | null;
   actionError: string | null;
-  replyOpen: boolean;
-  editing: boolean;
   onLike: () => void;
   onToggleReply: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const likeLabel = item.likeCount > 0 ? `추천 ${item.likeCount}` : "추천";
   const pending = item.id.startsWith("pending-");
-  const actionClass =
-    "inline-flex min-h-10 items-center gap-1 rounded-full px-2.5 text-xs font-semibold disabled:opacity-50 sm:min-h-8 sm:px-2";
+  const likeLabel = item.likeCount > 0 ? `추천 ${item.likeCount}` : "추천";
+
   return (
-    <div className="mt-2">
-      <div className="flex flex-wrap items-center gap-1">
-        <time className="mr-auto basis-full text-[11px] text-muted sm:basis-auto" dateTime={item.createdAt}>
-          {formatDateTime(item.createdAt)}
-        </time>
-        <button
-          type="button"
-          onClick={onLike}
-          disabled={pending}
-          aria-pressed={item.likedByMe}
-          aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
-          className={`${actionClass} ${item.likedByMe ? "bg-accent-soft text-accent-strong" : "text-muted"}`}
-        >
-          <ThumbsUp className={`h-3.5 w-3.5 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
-          {likeLabel}
-        </button>
-        {canReply ? (
-          <button
-            type="button"
-            onClick={onToggleReply}
-            aria-expanded={replyOpen}
-            className={`${actionClass} ${replyOpen ? "bg-foreground text-card" : "text-muted"}`}
-          >
-            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-            답글
-          </button>
-        ) : null}
-        {item.mine && !pending ? (
-          <>
+    <div className="flex gap-3">
+      <ProfileAvatar profile={{ nickname: item.nickname, avatarUrl: item.avatarUrl }} size="sm" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <p className="text-sm font-bold text-foreground">{item.nickname}</p>
+              {item.mine ? (
+                <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-strong">
+                  나
+                </span>
+              ) : null}
+              {optionLabel ? <span className="text-[11px] text-muted">{optionLabel}</span> : null}
+            </div>
+            <p className="mt-1 whitespace-pre-wrap text-[15px] leading-6 text-foreground">{item.body}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>
+              {canReply ? (
+                <button
+                  type="button"
+                  onClick={onToggleReply}
+                  aria-expanded={replyOpen}
+                  className={`font-semibold ${replyOpen ? "text-foreground" : "hover:text-foreground"}`}
+                >
+                  답글쓰기
+                </button>
+              ) : null}
+            </div>
+            {likeError ? (
+              <p className="mt-1 text-sm text-danger" role="alert">
+                {likeError}
+              </p>
+            ) : null}
+            {actionError ? (
+              <p className="mt-1 text-sm text-danger" role="alert">
+                {actionError}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
+            <CommentMoreMenu
+              pending={pending}
+              mine={item.mine}
+              mode={mode}
+              demo={demo}
+              onDemoState={onDemoState}
+              commentId={item.id}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
             <button
               type="button"
-              onClick={onEdit}
-              aria-pressed={editing}
-              className={`${actionClass} ${editing ? "bg-foreground text-card" : "text-muted"}`}
+              onClick={onLike}
+              disabled={pending}
+              aria-pressed={item.likedByMe}
+              aria-label={item.likedByMe ? `추천 취소, ${item.likeCount}` : likeLabel}
+              className={`inline-flex min-h-9 min-w-9 flex-col items-center justify-center rounded-full disabled:opacity-50 ${
+                item.likedByMe ? "text-danger" : "text-muted hover:text-foreground"
+              }`}
             >
-              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-              수정
+              <Heart className={`h-4 w-4 ${item.likedByMe ? "fill-current" : ""}`} aria-hidden="true" />
+              <span className="text-[11px] font-semibold leading-none tabular-nums">{item.likeCount}</span>
             </button>
-            <button type="button" onClick={onDelete} className={`${actionClass} text-danger`}>
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              삭제
-            </button>
-          </>
-        ) : null}
-        {pending ? null : (
-          <ReportForm
-            mode={mode}
-            targetType="comment"
-            targetId={item.id}
-            demoState={demo}
-            onDemoState={onDemoState}
-            compact
-          />
-        )}
+          </div>
+        </div>
       </div>
-      {likeError ? (
-        <p className="mt-1 text-sm text-danger" role="alert">
-          {likeError}
-        </p>
-      ) : null}
-      {actionError ? (
-        <p className="mt-1 text-sm text-danger" role="alert">
-          {actionError}
-        </p>
+    </div>
+  );
+}
+
+function CommentMoreMenu({
+  pending,
+  mine,
+  mode,
+  demo,
+  onDemoState,
+  commentId,
+  onEdit,
+  onDelete,
+}: {
+  pending: boolean;
+  mine: boolean;
+  mode: DataMode;
+  demo: DemoState;
+  onDemoState: (state: DemoState) => void;
+  commentId: string;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    function onPointer(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (pending) {
+    return <span className="h-8 w-8" aria-hidden="true" />;
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        aria-label="더보기"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-background hover:text-foreground"
+      >
+        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 z-20 mt-1 min-w-28 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg"
+        >
+          {mine ? (
+            <>
+              <MenuButton
+                onClick={() => {
+                  setOpen(false);
+                  onEdit();
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                수정
+              </MenuButton>
+              <MenuButton
+                danger
+                onClick={() => {
+                  setOpen(false);
+                  onDelete();
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                삭제
+              </MenuButton>
+            </>
+          ) : null}
+          <div className="px-1">
+            <ReportForm
+              mode={mode}
+              targetType="comment"
+              targetId={commentId}
+              demoState={demo}
+              onDemoState={onDemoState}
+              compact
+            />
+          </div>
+        </div>
       ) : null}
     </div>
+  );
+}
+
+function MenuButton({
+  children,
+  onClick,
+  danger,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold hover:bg-background ${
+        danger ? "text-danger" : "text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ReplyComposer({
+  commentId,
+  body,
+  error,
+  onBodyChange,
+  onCancel,
+  onSubmit,
+}: {
+  commentId: string;
+  body: string;
+  error: string | null;
+  onBodyChange: (value: string) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <form
+      className="mt-3 ml-11 space-y-2 rounded-2xl bg-background px-3 py-3 sm:ml-[3.25rem]"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+    >
+      <label className="block text-sm font-semibold" htmlFor={`reply-${commentId}`}>
+        답글
+        <textarea
+          id={`reply-${commentId}`}
+          value={body}
+          onChange={(event) => onBodyChange(event.target.value)}
+          maxLength={LIMITS.comment}
+          rows={3}
+          placeholder="이 의견에 짧게 답해 주세요."
+          className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-3 text-base font-normal"
+        />
+      </label>
+      <p className="text-right text-xs text-muted">
+        {body.length}/{LIMITS.comment}
+      </p>
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onCancel} className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-muted">
+          닫기
+        </button>
+        <button type="submit" className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-card">
+          답글 남기기
+        </button>
+      </div>
+    </form>
   );
 }
