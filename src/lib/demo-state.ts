@@ -110,11 +110,12 @@ export function castDemoVote(
   if (!allowedOptionIds.includes(optionId)) {
     return { ok: false, code: "invalid" };
   }
-  if (state.votes[questionId]) {
-    return { ok: false, code: "already_voted" };
-  }
 
-  const vote = { optionId, createdAt: now };
+  const existing = state.votes[questionId];
+  const vote = {
+    optionId,
+    createdAt: existing?.createdAt ?? now,
+  };
   const next = clone(state);
   next.votes[questionId] = vote;
   return { ok: true, state: next, value: vote };

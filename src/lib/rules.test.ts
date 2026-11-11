@@ -173,14 +173,18 @@ describe("suggestion and comment validation", () => {
 });
 
 describe("demo votes", () => {
-  it("stores one vote per question and refuses a second vote", () => {
+  it("stores one vote per question and allows changing the choice", () => {
     const first = castDemoVote(EMPTY_DEMO_STATE, "q1", "o1", ["o1", "o2"], "2026-10-23T00:00:00.000Z");
     assert.equal(first.ok, true);
     if (!first.ok) {
       return;
     }
     const second = castDemoVote(first.state, "q1", "o2", ["o1", "o2"]);
-    assert.deepEqual(second, { ok: false, code: "already_voted" });
+    assert.equal(second.ok, true);
+    if (second.ok) {
+      assert.equal(second.state.votes.q1?.optionId, "o2");
+      assert.equal(second.state.votes.q1?.createdAt, "2026-10-23T00:00:00.000Z");
+    }
     const wrong = castDemoVote(EMPTY_DEMO_STATE, "q1", "other", ["o1", "o2"]);
     assert.equal(wrong.ok, false);
 

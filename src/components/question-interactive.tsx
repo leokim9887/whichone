@@ -44,6 +44,7 @@ export function QuestionInteractive({
   const [draftOption, setDraftOption] = useState<string | null>(
     mode === "demo" ? null : initialParticipation.optionId,
   );
+  const [revoting, setRevoting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(participationError);
   const [commentBody, setCommentBody] = useState("");
@@ -71,7 +72,8 @@ export function QuestionInteractive({
         }
       : liveParticipation;
   const comments = mode === "demo" ? demoPublicComments(demo, question.id) : liveComments;
-  const selected = participation.voted ? participation.optionId : draftOption;
+  const selecting = !participation.voted || revoting;
+  const selected = selecting ? draftOption : participation.optionId;
 
   const summary = useMemo(
     () => buildSummary(question.options, participation.voted ? participation.counts : null, participation.optionId),
@@ -89,8 +91,24 @@ export function QuestionInteractive({
       ? "공유 참여자 수는 집계하지 않습니다"
       : formatParticipantCount(participation.voted ? participation.participantCount : question.participantCount);
 
+  function startRevote() {
+    setMessage(null);
+    setDraftOption(participation.optionId);
+    setRevoting(true);
+  }
+
+  function cancelRevote() {
+    setMessage(null);
+    setDraftOption(participation.optionId);
+    setRevoting(false);
+  }
+
   async function vote() {
-    if (!selected || participation.voted || saving) {
+    if (!selected || saving || !selecting) {
+      return;
+    }
+    if (revoting && selected === participation.optionId) {
+      setRevoting(false);
       return;
     }
     const ready = await ensureProfile();
@@ -114,6 +132,7 @@ export function QuestionInteractive({
         return;
       }
       writeDemoState(result.state);
+      setRevoting(false);
       return;
     }
 
@@ -133,6 +152,7 @@ export function QuestionInteractive({
       setMessage(result.message);
       return;
     }
+    setRevoting(false);
   }
 
   async function saveComment() {
@@ -206,9 +226,33 @@ export function QuestionInteractive({
         </p>
       ) : null}
 
-      {!participation.voted ? (
+      {summary && !revoting ? (
+        <div className="rise-in space-y-3" style={{ animationDelay: "100ms" }}>
+          <ResultBars
+            summary={summary}
+            scope={mode === "demo" ? "browser" : "shared"}
+            imageByOptionId={optionImages}
+          />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={startRevote}
+              className="pressable inline-flex min-h-11 items-center justify-center rounded-2xl border border-line bg-card px-4 text-sm font-semibold text-foreground transition hover:border-foreground/30"
+            >
+              다시 투표하기
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {selecting ? (
         <section className="rise-in space-y-3" style={{ animationDelay: "80ms" }}>
-          <h2 className="text-lg font-bold">선택지</h2>
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h2 className="text-lg font-bold">{revoting ? "선택 바꾸기" : "선택지"}</h2>
+            {revoting ? (
+              <p className="text-sm text-muted">현재 선택: {optionText.get(participation.optionId ?? "") ?? "없음"}</p>
+            ) : null}
+          </div>
           <div className="space-y-3">
             {question.options
               .slice()
@@ -243,27 +287,33 @@ export function QuestionInteractive({
                 );
               })}
           </div>
-          <p className="text-sm text-muted">투표 후에는 선택을 바꿀 수 없습니다. 득표율은 투표 뒤에 공개됩니다.</p>
-          <button
-            type="button"
-            onClick={() => void vote()}
-            disabled={!selected || saving}
-            className="btn-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold sm:w-auto"
-          >
-            {saving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-            {saving ? "투표하는 중" : "투표하기"}
-          </button>
+          <p className="text-sm text-muted">
+            {revoting
+              ? "다른 선택지로 바꾼 뒤 확인을 눌러 주세요. 결과는 바로 반영됩니다."
+              : "투표 뒤에는 결과를 볼 수 있고, 언제든지 다시 투표할 수 있어요."}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => void vote()}
+              disabled={!selected || saving}
+              className="btn-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold sm:w-auto"
+            >
+              {saving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+              {saving ? "저장하는 중" : revoting ? "선택 확정" : "투표하기"}
+            </button>
+            {revoting ? (
+              <button
+                type="button"
+                onClick={cancelRevote}
+                disabled={saving}
+                className="pressable inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-line bg-card px-5 text-sm font-semibold text-muted hover:border-foreground/30 hover:text-foreground sm:w-auto"
+              >
+                취소
+              </button>
+            ) : null}
+          </div>
         </section>
-      ) : null}
-
-      {summary ? (
-        <div className="rise-in" style={{ animationDelay: "100ms" }}>
-          <ResultBars
-            summary={summary}
-            scope={mode === "demo" ? "browser" : "shared"}
-            imageByOptionId={optionImages}
-          />
-        </div>
       ) : null}
 
       {participation.voted ? (

@@ -1,5 +1,5 @@
 const MESSAGES: Record<string, string> = {
-  already_voted: "이미 이 질문에 투표했습니다.",
+  already_voted: "투표를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.",
   already_commented: "이 질문에는 의견을 한 번만 남길 수 있습니다.",
   already_replied: "이 의견에는 답글을 한 번만 남길 수 있습니다.",
   own_like: "내가 쓴 글에는 추천할 수 없습니다.",
